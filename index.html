@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CapricEngine v5.2</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=DM+Serif+Display&family=Rajdhani:wght@400;500;600;700&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style/core-layout.css">
+  <link rel="stylesheet" href="style/components.css">
+  <link rel="stylesheet" href="style/theme-visuals.css">
+  <script src="lib/midiwriter.js"></script>
+</head>
+<body>
+  <header>
+    <div class="header-logo-block">
+      <img src="CapricEngine_LogoW.svg" alt="CapricEngine" id="appLogo">
+      <div class="header-text-block">
+        <div class="header-name-row">
+          <span class="header-wordmark">CapricEngine</span>
+          <span class="version-badge">v5.2</span>
+        </div>
+        <p class="header-tagline">Create musical architectures</p>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section id="input-controls-section" class="main-content-section"> <form id="songParamsForm">
+        <div>
+          <label for="mood">Main Mood:</label>
+          <select id="mood" name="mood">
+            <option value="malinconico_introspettivo">Melancholic / Introspective</option>
+            <option value="ansioso_distopico">Anxious / Dystopian</option>
+            <option value="etereo_sognante">Ethereal / Dreamy</option>
+            <option value="arrabbiato_critico">Angry / Critical</option>
+            <option value="sperimentale_astratto">Experimental / Abstract</option>
+            <option value="very_normal_person" selected>Mega Pop Hit (Pop/Rock)</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="tempo_feeling">Tempo Feeling:</label>
+          <select id="tempo_feeling" name="tempo_feeling">
+            <option value="lento_atmosferico">Slow & Atmospheric (60‑85 BPM)</option>
+            <option value="mid_tempo_groove" selected>Mid‑Tempo with Groove (90‑115 BPM)</option>
+            <option value="incalzante_energico">Upbeat / Energetic (120‑150 BPM)</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="forceTimeSignature">Meter:</label>
+          <select id="forceTimeSignature" name="forceTimeSignature">
+            <option value="random" selected>Random (based on Mood)</option>
+            <option value="4/4">4/4</option>
+            <option value="3/4">3/4</option>
+            <option value="6/8">6/8</option>
+            <option value="2/4">2/4</option>
+            <option value="12/8">12/8</option>
+            <option value="5/4">5/4</option>
+            <option value="7/8">7/8</option>
+            <option value="9/8">9/8</option>
+                   <option value="5/8">5/8</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="songStructure">Structure Template:</label>
+          <select id="songStructure" name="songStructure">
+            <option value="random" selected>Random</option>
+          </select>
+        </div>
+        <div>
+          <label for="keySelection">Key (Optional):</label>
+          <select id="keySelection" name="keySelection">
+            <option value="random" selected>Random</option>
+            </select>
+        </div>
+
+        <div>
+            <label for="enableModalInterchange">Enable Modal Interchange:</label>
+            <input type="checkbox" id="enableModalInterchange" name="enableModalInterchange" checked>
+        </div>
+
+        <div>
+          <label for="bassMode">Bass Mode:</label>
+          <select id="bassMode" name="bassMode">
+            <option value="random" selected>Random</option>
+            <option value="pattern">Pattern (classic)</option>
+            <option value="walking">Walking</option>
+            <option value="generative">Generative</option>
+          </select>
+        </div>
+
+        <div class="button-container">
+          <button type="button" id="generateButton">Generate</button>
+        </div>
+      </form>
+    </section>
+
+    <section id="song-output-container" class="main-content-section">
+      <div id="songOutput">
+        <p><em>Premi "Generate" per creare la tua bozza...</em></p>
+      </div>
+      <div id="action-buttons" class="action-buttons-container" style="display: none;">
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>&copy; Phalbo Music Services. </p>
+  </footer>
+
+<!-- CONFIG -->
+<script src="lib/config-music-data.js"></script>
+<script src="lib/modal-interchange.js"></script>
+<script src="lib/theory-helpers.js"></script>
+<script src="lib/harmonic-patterns-config.js"></script>
+<script src="lib/passing-chords-config.js"></script>
+<script src="lib/vocal_profiles.js"></script>
+<script src="lib/rhythm-patterns.js"></script>
+
+<!-- CORE RENDER + UTILS -->
+<script src="lib/chord-renderer.js"></script>
+<script src="lib/scale-renderer.js"></script>
+<script src="lib/drum-patterns-library.js"></script>
+<script src="lib/drum-patterns-extra.js"></script>
+<script src="lib/arpeggiator.js"></script>
+<script src="lib/chance.min.js"></script>
+
+<!-- GENERATORI (devono venire *dopo* le config e helpers) -->
+<script src="gen/phalbo-title-generator.js"></script>
+<script src="gen/melody-generator.js"></script>
+<script src="gen/bass-pitch-selector.js"></script>
+<script src="gen/generateBassLineForSong.js"></script>
+<script src="gen/generateVocalLineForSong.js"></script>
+<script src="gen/generateDrumTrackForSong.js"></script>
+<script src="gen/generateCountermelodyForSong.js"></script>
+<script src="gen/generateTextureForSong.js"></script>
+<script src="gen/generateDronesForSong.js"></script>
+<script src="gen/generateOrnamentForSong.js"></script>
+<script src="gen/generateMiasmaticForSong.js"></script>
+<script src="gen/generatePercussionForSong.js"></script>
+<script src="gen/generateGlitchFxForSong.js"></script>
+<script src="gen/generatePadForTheSong.js"></script>
+
+<!-- MAIN LOGIC -->
+<script src="main/app-song-generation.js"></script>
+<script src="main/app-ui-render.js"></script>
+<script src="main/app-midi-export.js"></script>
+<script src="main/app-setup.js"></script>
+<!-- CDN: Tone.js for audio preview -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js" crossorigin="anonymous"></script>
+<!-- CDN: html2canvas + jsPDF for PDF export -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" crossorigin="anonymous"></script>
+<!-- Audio preview -->
+<script src="main/app-audio-playback.js"></script>
+  <div id="toast-container"></div>
+</body>
+</html>

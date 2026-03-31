@@ -1,0 +1,38 @@
+{
+  "4/4": [
+    {
+      "name": "strum_down_full",
+      "sectionTypes": ["verse", "chorus", "intro", "outro"],
+      "weight": 30,
+      "steps": ["D", "D", "D", "D"]
+    },
+    {
+      "name": "arpeggio_soft",
+      "sectionTypes": ["verse", "bridge"],
+      "weight": 20,
+      "steps": ["A", "B", "G", "E"]
+    },
+    {
+      "name": "strum_up_down",
+      "sectionTypes": ["chorus"],
+      "weight": 25,
+      "steps": ["U", "D", "U", "D"]
+    }
+  ],
+  "3/4": [
+    {
+      "name": "waltz_strum",
+      "sectionTypes": ["verse", "chorus", "bridge"],
+      "weight": 40,
+      "steps": ["D", "D", "D"]
+    }
+  ],
+  "default": [
+    {
+      "name": "basic_strum",
+      "sectionTypes": ["any"],
+      "weight": 10,
+      "steps": ["D", "-"]
+    }
+  ]
+}

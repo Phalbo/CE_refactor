@@ -1,0 +1,321 @@
+/* File: core-layout.css — v5.2 */
+/* Reset, CSS variables, base layout. */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  /* === v5.2 Palette — WCAG 2.1 AA compliant === */
+  --bg-primary:    #0F1117;
+  --bg-secondary:  #1A1D27;
+  --bg-tertiary:   #222636;
+  --bg-surface:    #1E2130;
+  --bg-overlay:    rgba(15, 17, 23, 0.92);
+
+  --text-primary:   #F0EEE8;
+  --text-secondary: #8A8FA8;
+  --text-muted:     #5A5F78;
+  --text-on-dark:   #FFFFFF;
+  --text-on-accent: #FFFFFF;
+
+  /* Accent indigo (electric) */
+  --accent:             #7C6AF7;
+  --accent-hover:       #9180F9;
+  --accent-active:      #6355D4;
+  --accent-subtle:      rgba(124, 106, 247, 0.12);
+  --accent-focus-ring:  rgba(124, 106, 247, 0.38);
+
+  /* Accent warm (amber — use sparingly) */
+  --accent-warm:        #E8A24A;
+  --accent-warm-subtle: rgba(232, 162, 74, 0.12);
+
+  /* Borders */
+  --border:       #2A2D3A;
+  --border-hover: #3D4158;
+
+  /* Section palette (v5.2) */
+  --section-color-intro:       #4A7FA5;
+  --section-color-verse:       #5A9A6E;
+  --section-color-prechorus:   #7A8A9A;
+  --section-color-chorus:      #9A5A9A;
+  --section-color-chorusdouble:#A86AAB;
+  --section-color-finalchorus: #B878B8;
+  --section-color-bridge:      #A57A4A;
+  --section-color-bridgemod:   #B58E5A;
+  --section-color-middle8:     #9A7A3A;
+  --section-color-breakdown:   #6A5490;
+  --section-color-solo:        #A55A5A;
+  --section-color-guitarsolo:  #B56A6A;
+  --section-color-noisesolo:   #706878;
+  --section-color-glitchsolo:  #8878A8;
+  --section-color-instrumental:#4A6A8A;
+  --section-color-outro:       #5A7AA5;
+  --section-color-outroquiet:  #4A6888;
+  --section-color-outrosospeso:#6878A0;
+  --section-color-screamoutro: #8A3B4B;
+  --section-color-fadeout:     #4A4F5A;
+  --section-color-coda:        #726878;
+  --section-color-slamend:     #383838;
+  --section-color-sonicend:    #52595E;
+  --section-color-finalshout:  #A03838;
+  --section-color-end:         #282828;
+  --section-color-refrain:     #4A867F;
+  --section-color-interlude:   #745C9A;
+  --section-color-noiseinterlude:  #7A7F8A;
+  --section-color-ambientinterlude: #888FA0;
+  --section-color-experimentalinterlude: #9484AA;
+  --section-color-droneinterlude: #686A80;
+  --section-color-sonicinterlude: #707888;
+  --section-color-screaminterlude: #9A4E5A;
+  --section-color-silence:     #1C1C22;
+  --section-color-glitchsection: #A888AE;
+  --section-color-glitch:      #9E74AB;
+  --section-color-ambientloop: #748898;
+  --section-color-texture:     #8A93A8;
+  --section-color-fragment:    #5C6A70;
+  --section-color-spoken:      #8A9088;
+  --section-color-soundscape:  #546070;
+  --section-color-disruption:  #883838;
+  --section-color-reverse:     #2E4050;
+  --section-color-noise:       #585858;
+  --section-color-fade:        #383838;
+  --section-color-parta:       #4A6E65;
+  --section-color-partb:       #5A7E72;
+  --section-color-partc:       #689880;
+  --section-color-default:     #3A3F50;
+
+  /* Spacing */
+  --space-xxs: 0.25rem;
+  --space-xs:  0.5rem;
+  --space-sm:  0.75rem;
+  --space-md:  1.125rem;
+  --space-lg:  1.75rem;
+  --space-xl:  2.5rem;
+  --space-xxl: 3.5rem;
+
+  /* Typography */
+  --font-primary:   'Inter', 'Helvetica Neue', Arial, sans-serif;
+  --font-display:   'DM Serif Display', Georgia, serif;
+  --font-headings:  'Inter', 'Helvetica Neue', Arial, sans-serif;
+  --font-monospace: 'Fira Code', 'Courier New', monospace;
+  --font-size-base: 15px;
+  --line-height-base: 1.65;
+
+  /* Radii */
+  --radius-sm: 5px;
+  --radius-md: 9px;
+  --radius-lg: 14px;
+  --radius-full: 9999px;
+
+  /* Keep legacy aliases so existing components.css references work */
+  --border-radius-sm: var(--radius-sm);
+  --border-radius-md: var(--radius-md);
+  --border-radius-lg: var(--radius-lg);
+  --border-primary:   var(--border);
+  --border-secondary: var(--border-hover);
+  --bg-overlay-color: var(--bg-overlay);
+
+  /* Transitions */
+  --transition-fast: all 0.15s ease;
+  --transition-std:  all 0.22s ease;
+
+  /* Z-index layers */
+  --z-background: -1;
+  --z-default:    1;
+  --z-sticky:     100;
+  --z-modal:      1000;
+  --z-toast:      9999;
+
+  /* Timeline */
+  --bar-unit-width: 36px;
+  --min-section-bar-display: 4;
+  --section-height: 180px;
+  --section-height-mobile: 200px;
+  --default-darken: rgba(0,0,0,0.35);
+}
+
+html {
+  font-size: var(--font-size-base);
+  scroll-behavior: smooth;
+  color-scheme: dark;
+}
+
+body {
+  font-family: var(--font-primary);
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  margin: 0;
+  padding: 0;
+  line-height: var(--line-height-base);
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ===  HEADER — logo-forward === */
+header {
+  background: #0F1117;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--border);
+  padding: 10px var(--space-lg);
+  min-height: 72px;
+  display: flex;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: var(--z-sticky);
+  width: 100%;
+}
+
+.header-logo-block {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+#appLogo {
+  height: 80px;
+  width: auto;
+  flex-shrink: 0;
+}
+
+.header-text-block {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.header-name-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.header-wordmark {
+  font-family: var(--font-display);
+  font-size: 1.4em;
+  color: var(--text-primary);
+  line-height: 1.1;
+  letter-spacing: 0.01em;
+}
+
+header .version-badge {
+  font-size: 0.68em;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: var(--accent);
+  background: var(--accent-subtle);
+  border: 1px solid rgba(124, 106, 247, 0.3);
+  border-radius: var(--radius-full);
+  padding: 2px 8px;
+  flex-shrink: 0;
+  align-self: center;
+}
+
+.header-tagline {
+  font-size: 0.72em;
+  color: var(--text-muted);
+  line-height: 1.2;
+  margin: 0;
+  font-family: var(--font-primary);
+}
+
+header p {
+  display: none;
+}
+
+main {
+  flex: 1;
+  padding: var(--space-md);
+  width: 100%;
+  max-width: 1440px;
+  margin: var(--space-md) auto;
+}
+
+footer {
+  margin-top: var(--space-md);
+  padding: var(--space-lg) var(--space-md);
+  text-align: center;
+  background: var(--bg-primary);
+  color: var(--text-muted);
+  font-size: 0.85em;
+  border-top: 1px solid var(--border);
+}
+
+/* === HEADINGS === */
+h1, h2, h3,
+.section-header-title,
+#midiDownloadTitle,
+.chord-glossary-title {
+  font-family: var(--font-headings);
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--text-primary);
+  letter-spacing: -0.2px;
+}
+
+h1 { font-size: 2.4rem; }
+h2 { font-size: 1.9rem; }
+
+.song-title-main {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 400;
+  color: var(--text-primary);
+  letter-spacing: 0;
+  margin-bottom: var(--space-sm);
+}
+
+#songOutput > h3,
+.section-header-title,
+#midiDownloadTitle,
+.chord-glossary-title {
+  font-size: 1.15rem;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: var(--text-secondary);
+  margin-top: var(--space-xl);
+  margin-bottom: var(--space-md);
+}
+
+#songOutput > h3 { margin-top: 0; }
+
+p { margin-bottom: var(--space-sm); }
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+  transition: var(--transition-fast);
+}
+a:hover { color: var(--accent-hover); }
+
+code,
+#songOutput .chord-entry code {
+  font-family: var(--font-monospace);
+  background: var(--bg-tertiary);
+  padding: 2px var(--space-xs);
+  border-radius: var(--radius-sm);
+  font-size: 0.88em;
+  color: var(--accent-warm);
+}
+
+/* === RESPONSIVE === */
+@media (max-width: 768px) {
+  header { padding: 8px var(--space-md); min-height: 64px; }
+  #appLogo { height: 56px; }
+  .header-wordmark { font-size: 1.15em; }
+  main { padding: var(--space-sm); margin: var(--space-sm) auto; }
+}
+
+@media (max-width: 375px) {
+  header { padding: 6px var(--space-sm); min-height: 56px; }
+  #appLogo { height: 44px; }
+  .header-tagline { display: none; }
+}

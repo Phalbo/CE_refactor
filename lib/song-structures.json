@@ -1,0 +1,144 @@
+{
+  "templates": [
+    {
+      "id": "build_collapse",
+      "name": "Build & Collapse",
+      "mood": "malinconico_introspettivo",
+      "description": "Una struttura narrativa che cresce in intensità fino a un climax e poi si dissolve.",
+      "structure": ["Intro", "Verse", "Pre-Chorus", "Chorus", "Verse", "Chorus", "Bridge", "Chorus", "Outro (quiet)"]
+    },
+    {
+      "id": "fast_spiral",
+      "name": "Fast Spiral",
+      "mood": "ansioso_distopico",
+      "description": "Veloce e ripetitiva, con sezioni brevi che creano un senso di urgenza e ansia.",
+      "structure": ["Intro", "Verse", "Chorus", "Verse", "Chorus", "Breakdown", "Chorus", "Outro"]
+    },
+    {
+      "id": "tension_loop",
+      "name": "Tension Loop",
+      "mood": "ansioso_distopico",
+      "description": "Un loop ipnotico con poche variazioni, ideale per creare tensione costante.",
+      "structure": ["Intro", "Verse", "Verse", "Chorus", "Verse", "Chorus", "Glitch Section", "Chorus"]
+    },
+    {
+      "id": "narrative_arc",
+      "name": "Narrative Arc",
+      "mood": "very_normal_person",
+      "description": "La classica struttura pop/rock, bilanciata e prevedibile.",
+      "structure": ["Intro", "Verse", "Chorus", "Verse", "Chorus", "Bridge", "Chorus", "Outro"]
+    },
+    {
+      "id": "dream_layers",
+      "name": "Dream Layers",
+      "mood": "etereo_sognante",
+      "description": "Strati sonori che si sovrappongono, con sezioni che sfumano l'una nell'altra.",
+      "structure": ["Intro", "Texture", "Verse", "Chorus", "Ambient Interlude", "Chorus", "Outro sospeso"]
+    },
+    {
+      "id": "sudden_rage",
+      "name": "Sudden Rage",
+      "mood": "arrabbiato_critico",
+      "description": "Alterna momenti di calma a esplosioni di rabbia.",
+      "structure": ["Verse (quiet)", "Chorus (loud)", "Verse (quiet)", "Chorus (loud)", "Breakdown", "Final Chorus", "Scream Outro"]
+    },
+    {
+      "id": "abstract_fragments",
+      "name": "Abstract Fragments",
+      "mood": "sperimentale_astratto",
+      "description": "Una collezione di frammenti sonori non lineari.",
+      "structure": ["Intro", "Fragment", "Spoken", "Noise", "Chorus", "Fragment", "Outro"]
+    },
+    {
+      "id": "grotesque_dance",
+      "name": "Grotesque Dance",
+      "mood": "ansioso_distopico",
+      "description": "Un ritmo zoppicante e inquietante, con una struttura volutamente sbilanciata.",
+      "structure": ["Intro", "Verse (off-beat)", "Chorus", "Verse (off-beat)", "Glitch Solo", "Chorus", "Outro"]
+    },
+    {
+      "id": "epic_journey",
+      "name": "Epic Journey",
+      "mood": "etereo_sognante",
+      "description": "Un lungo viaggio musicale con molte sezioni diverse, tra cui un assolo.",
+      "structure": ["Intro", "Verse", "Pre-Chorus", "Chorus", "Instrumental", "Verse", "Chorus", "Solo", "Bridge", "Chorus", "Coda"]
+    },
+    {
+      "id": "pop_anthem",
+      "name": "Pop Anthem",
+      "mood": "very_normal_person",
+      "description": "Struttura da hit radiofonica, con un ritornello che si ripete spesso.",
+      "structure": ["Verse", "Pre-Chorus", "Chorus", "Verse", "Pre-Chorus", "Chorus", "Chorus", "Outro"]
+    },
+    {
+      "id": "slow_burn",
+      "name": "Slow Burn",
+      "mood": "malinconico_introspettivo",
+      "description": "Un crescendo lento e costante che porta a un finale intenso.",
+      "structure": ["Intro (quiet)", "Verse", "Verse", "Pre-Chorus", "Chorus (rising)", "Bridge", "Final Chorus (peak)", "Fade out"]
+    },
+    {
+      "id": "punk_burst",
+      "name": "Punk Burst",
+      "mood": "arrabbiato_critico",
+      "description": "Breve, veloce e diretto. Meno di due minuti di pura energia.",
+      "structure": ["Intro (fast)", "Verse", "Chorus", "Verse", "Chorus", "Slam End"]
+    },
+    {
+      "id": "ambient_wash",
+      "name": "Ambient Wash",
+      "mood": "etereo_sognante",
+      "description": "Un paesaggio sonoro senza una struttura ritmica definita.",
+      "structure": ["Texture", "Soundscape", "Drone Interlude", "Texture", "Fade"]
+    },
+    {
+      "id": "deconstructed_song",
+      "name": "Deconstructed Song",
+      "mood": "sperimentale_astratto",
+      "description": "Gli elementi di una canzone tradizionale, ma in ordine sparso.",
+      "structure": ["Chorus", "Verse", "Silence", "Fragment", "Intro", "Outro"]
+    },
+    {
+      "id": "folk_tale",
+      "name": "Folk Tale",
+      "mood": "malinconico_introspettivo",
+      "description": "Una ballata narrativa con una struttura semplice e ripetitiva.",
+      "structure": ["Verse", "Refrain", "Verse", "Refrain", "Middle 8", "Verse", "Refrain", "Outro"]
+    },
+    {
+      "id": "industrial_march",
+      "name": "Industrial March",
+      "mood": "ansioso_distopico",
+      "description": "Un ritmo marziale e oppressivo.",
+      "structure": ["Intro (rhythmic)", "Verse", "Chorus", "Verse", "Noise Interlude", "Chorus", "Outro"]
+    },
+    {
+      "id": "heavy_riffage",
+      "name": "Heavy Riffage",
+      "mood": "arrabbiato_critico",
+      "description": "Costruito attorno a un riff di chitarra potente e ripetuto.",
+      "structure": ["Intro (riff)", "Verse", "Chorus", "Verse", "Chorus", "Guitar Solo (riff-based)", "Breakdown", "Chorus"]
+    },
+    {
+      "id": "minimalist_pulse",
+      "name": "Minimalist Pulse",
+      "mood": "sperimentale_astratto",
+      "description": "Pulsazioni ritmiche e poche note che evolvono lentamente.",
+      "structure": ["Part A", "Part B", "Part A", "Part C", "Part B", "Fade"]
+    },
+    {
+      "id": "jazz_club",
+      "name": "Jazz Club",
+      "mood": "very_normal_person",
+      "description": "Una struttura jazzistica standard con spazio per l'improvvisazione.",
+      "structure": ["Intro", "Head (AABA)", "Solo 1", "Solo 2", "Head (AABA)", "Outro"]
+    },
+    {
+      "id": "no_chorus",
+      "name": "No Chorus",
+      "mood": "malinconico_introspettivo",
+      "description": "Una canzone che si sviluppa senza un ritornello, creando un'atmosfera più intima e riflessiva.",
+      "structure": ["Intro", "Verse 1", "Verse 2", "Bridge", "Verse 3", "Outro"]
+    }
+  ]
+}

@@ -1,0 +1,170 @@
+/* File: theme-visuals.css — v5.2 */
+/* Animations, shadows, visual polish. */
+
+:root {
+  /* Shadows */
+  --shadow-sm:     0 1px 3px rgba(0,0,0,0.35);
+  --shadow-md:     0 4px 12px rgba(0,0,0,0.4), 0 1px 3px rgba(0,0,0,0.25);
+  --shadow-lg:     0 8px 24px rgba(0,0,0,0.45), 0 3px 8px rgba(0,0,0,0.3);
+  --shadow-accent: 0 0 16px rgba(124, 106, 247, 0.35);
+
+  /* Legacy aliases */
+  --box-shadow-sm:     var(--shadow-sm);
+  --box-shadow-md:     var(--shadow-md);
+  --box-shadow-lg:     var(--shadow-lg);
+  --box-shadow-accent: var(--shadow-accent);
+  --accent-primary-focus-shadow: rgba(124, 106, 247, 0.38);
+
+  /* Legacy accent aliases — keep old variable names pointing at new values */
+  --accent-primary:       var(--accent);
+  --accent-primary-hover: var(--accent-hover);
+
+  /* Diagram colors */
+  --diagram-fret-color:   #3A3F50;
+  --diagram-string-color: #5A5F78;
+  --diagram-dot-color:    var(--text-primary);
+  --diagram-finger-color: var(--bg-primary);
+  --diagram-open-color:   var(--text-secondary);
+  --diagram-muted-color:  var(--text-muted);
+
+  --piano-white-key-color:  #E8E6E0;
+  --piano-black-key-color:  #1A1D27;
+  --piano-key-border-color: #0F1117;
+  --piano-pressed-key-color: var(--accent);
+
+  /* Extra button colors (for extra generators) */
+  --btn-countermelody-bg:      #4a7de2;
+  --btn-countermelody-hover-bg:#5a8ef2;
+  --btn-texture-bg:            #3EC9A0;
+  --btn-texture-hover-bg:      #4ED9B0;
+  --btn-ornament-bg:           #9A40C0;
+  --btn-ornament-hover-bg:     #AA50D0;
+  --btn-miasmatic-bg:          #7820E0;
+  --btn-miasmatic-hover-bg:    #8830F0;
+  --btn-drones-bg:             #D08820;
+  --btn-drones-hover-bg:       #E09830;
+  --btn-percussion-bg:         #C0B420;
+  --btn-percussion-hover-bg:   #D0C430;
+  --btn-glitch-bg:             #C01828;
+  --btn-glitch-hover-bg:       #D02838;
+
+  --bg-angle: 0deg;
+}
+
+/* === ANIMATED BACKGROUND (subtle indigo cloud) === */
+body::before {
+  content: "";
+  position: fixed;
+  inset: -50% -50% -20% -50%;
+  z-index: var(--z-background);
+  background: conic-gradient(
+    from var(--bg-angle) at 50% 50%,
+    #7C6AF7 0%,
+    #E8A24A 25%,
+    #3A2A8A 50%,
+    #E8A24A 75%,
+    #7C6AF7 100%
+  );
+  opacity: 0.09;
+  filter: blur(90px);
+  animation: spinBg 40s linear infinite;
+  transform-origin: 50% 50%;
+}
+
+@keyframes spinBg {
+  to { --bg-angle: 360deg; }
+}
+
+@supports not (animation-timing-function: linear(var(--bg-angle))) {
+  body::before {
+    animation: spinBgLegacy 40s linear infinite;
+  }
+  @keyframes spinBgLegacy {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+  }
+}
+
+/* === GENERATE BUTTON — pulse when idle === */
+@keyframes pulseAccent {
+  0%   { box-shadow: 0 0 0 0 rgba(124, 106, 247, 0.5); }
+  65%  { box-shadow: 0 0 0 10px rgba(124, 106, 247, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(124, 106, 247, 0); }
+}
+button#generateButton:not(:disabled):not(.loading) {
+  animation: pulseAccent 2.6s ease-in-out infinite;
+}
+
+/* === LOADING SPINNER on generate button === */
+@keyframes btnSpin {
+  to { transform: rotate(360deg); }
+}
+button#generateButton.loading {
+  pointer-events: none;
+  opacity: 0.7;
+  position: relative;
+}
+button#generateButton.loading::before {
+  content: '';
+  display: inline-block;
+  width: 1em; height: 1em;
+  margin-right: 0.5em;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: btnSpin 0.65s linear infinite;
+  vertical-align: middle;
+}
+
+/* === FADE-IN-UP === */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.timeline-section-card { animation: fadeInUp 0.32s ease-out both; }
+.chord-entry           { animation: fadeInUp 0.38s ease-out both; }
+
+/* === TOAST NOTIFICATIONS === */
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(18px) scale(0.94); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes toastOut {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to   { opacity: 0; transform: translateY(18px) scale(0.94); }
+}
+
+#toast-container {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  z-index: var(--z-toast);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  pointer-events: none;
+}
+.toast {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-hover);
+  color: var(--text-primary);
+  padding: 0.6rem 1rem;
+  border-radius: var(--radius-md);
+  font-size: 0.875em;
+  font-family: var(--font-primary);
+  box-shadow: var(--shadow-lg);
+  min-width: 190px; max-width: 300px;
+  animation: toastIn 0.28s ease-out both;
+  pointer-events: auto;
+  border-left: 3px solid var(--accent);
+}
+.toast.toast-success { border-left-color: #3EC9A0; }
+.toast.toast-error   { border-left-color: #C05060; }
+.toast.toast-info    { border-left-color: var(--accent); }
+.toast.toast-hiding  { animation: toastOut 0.28s ease-in both; }
+
+/* === CHORD DIAGRAM SVG === */
+.chord-diagram-svg.piano rect[fill*="rgba"] {
+  stroke-width: 1.5px;
+  stroke: var(--accent-hover);
+}
