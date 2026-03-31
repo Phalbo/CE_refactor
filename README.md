@@ -1,5 +1,16 @@
 # CapricEngine v5.2
+## Refactor status
 
+**S1 — Complete**
+- `lib/song-document.js` created: global state audit + `createSongDocument()` factory + MidiTrack/NoteEvent typedefs
+- `index.html`: `lib/song-document.js` added as first script tag
+- Globals identified in audit (not yet removed — pending S2/S3): `currentSongDataForSave`, `currentMidiData`, `mainChordSlots`, `progressionCache`, and all generator output caches
+
+**S2 — Pending**
+Wire `createSongDocument()` into `app-song-generation.js`, normalize all generator outputs to MidiTrack, wire `app-midi-export.js` to read from `window.currentSong`.
+
+**S3 — Pending**
+Wire `app-ui-render.js`, `app-audio-playback.js`, PDF export to `window.currentSong`. Remove all old globals. Full verification.
 **Algorithmic music generator — web-based, client-side, no build step.**  
 Generates complete song structures with chords, melody, bass, drums and additional layers, exported as multi-track MIDI files. In-browser audio preview via Tone.js.
 
