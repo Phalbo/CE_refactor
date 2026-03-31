@@ -34,6 +34,15 @@ Generates complete song structures with chords, melody, bass, drums and addition
 
 Fully static app: HTML + CSS + vanilla JS. One PHP endpoint (`get_chord_data.php`) for chord voicing lookups. No npm, no build step, no framework. All JS loaded via `<script>` tags in `index.html` in strict dependency order.
 
+Refactor S1 complete: SongDocument defined in lib/song-document.js. Global state audit at top of that file. Wiring: pending (S2, S3).
+
+**Refactor S1 change log (commit `[CE5.2] Refactor S1`):**
+- **New file**: `lib/song-document.js` — contains the global state audit comment block and `createSongDocument()` factory function + MidiTrack/NoteEvent JSDoc typedefs. No existing code is touched by this file.
+- **Modified**: `index.html` — added `<script src="lib/song-document.js">` as the very first script tag (before `lib/config-music-data.js`).
+- **No other files changed.** All existing globals (`currentMidiData`, `sectionCache`, `glossaryChordData`, `CHORD_LIB`, `currentSongDataForSave`, audio synth vars) remain exactly where they are and are not yet wired to `createSongDocument()`.
+- **Pending (S2)**: replace `currentMidiData` and `sectionCache` with a live `SongDocument` instance; update all read/write sites across `main/` and `gen/`.
+- **Pending (S3)**: remove legacy globals once all consumers are wired; validate zero MIDI output change.
+
 ### Critical data contract — do not break
 
 **`mainChordSlots`** is the central object produced by `app-song-generation.js` and consumed by every generator and by `app-midi-export.js`. Structure per slot:
