@@ -557,10 +557,6 @@ async function generateSongArchitecture() {
         if (typeof updateEstimatedSongDuration === "function") {
             updateEstimatedSongDuration();
         }
-      if (typeof buildSongDataForTextFile === "function") {
-            buildSongDataForTextFile();
-        }
-
         console.log("Progression cache during generation:", progressionCache);
 
         const actionButtonsContainer = document.getElementById('action-buttons');
