@@ -72,7 +72,7 @@ function generateOrnamentForSong(songData, helpers) {
                     const graceNoteVelocity = humanizeVelocity(55, 10);
                     const graceDuration = Math.round(ticksPerBeat / 4); // dynamic: 1/4 beat
 
-                    const humanizedOrnamentStart = humanizeTiming(ornamentStartTick, 3);
+                    const humanizedOrnamentStart = humanizeTiming(ornamentStartTick, 1);
                     const ornamentEvents = [
                         { pitch: [graceNotePitch], duration: `T${graceDuration}`, startTick: humanizedOrnamentStart, velocity: graceNoteVelocity },
                         { pitch: [pitch], duration: `T${ticksPerBeat - graceDuration}`, startTick: humanizedOrnamentStart + graceDuration, velocity: humanizeVelocity(80, 10) }

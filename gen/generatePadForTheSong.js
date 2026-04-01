@@ -36,7 +36,7 @@ function handleGeneratePad() {
                             chordMIDIEvents.push({
                                 pitch: midiNoteNumbers,
                                 duration: `T${Math.round(slot.effectiveDurationTicks)}`,
-                                startTick: humanizeTiming(sectionData.startTick + slot.effectiveStartTickInSection, 8),
+                                startTick: humanizeTiming(sectionData.startTick + slot.effectiveStartTickInSection, 2),
                                 velocity: 60,
                             });
                         }
