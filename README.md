@@ -6,8 +6,10 @@
 - `index.html`: `lib/song-document.js` added as first script tag
 - Globals identified in audit (not yet removed — pending S2/S3): `currentSongDataForSave`, `currentMidiData`, `mainChordSlots`, `progressionCache`, and all generator output caches
 
-**S2 — Pending**
-Wire `createSongDocument()` into `app-song-generation.js`, normalize all generator outputs to MidiTrack, wire `app-midi-export.js` to read from `window.currentSong`.
+**S2 — Complete**
+- `app-song-generation.js`: SongDocument initialized on every run, `progressionCache` aliased onto it, all legacy fields copied via `Object.assign`, `currentMidiData = currentSong` for backward compat.
+- `lib/theory-helpers.js`: `normalizeToMidiTrack()` added.
+- `main/app-midi-export.js`, `main/app-setup.js`, `gen/generatePadForTheSong.js`: all generators write to `window.currentSong.tracks[key]`. `app-midi-export.js` reads from `window.currentSong` throughout.
 
 **S3 — Pending**
 Wire `app-ui-render.js`, `app-audio-playback.js`, PDF export to `window.currentSong`. Remove all old globals. Full verification.
