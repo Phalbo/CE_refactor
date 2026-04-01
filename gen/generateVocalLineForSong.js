@@ -553,10 +553,11 @@ function generateVocalLineForSong(
                     const eventStartAbsolute = currentSlotAbsoluteStartTickInSong + scaledEventStartRelative;
 
                     if (eventStartAbsolute < (sectionStartTickAbsolute + sectionTotalDurationTicks) && eventDuration > 0) {
+                        const clampedNewPitch = clampToRange(newPitch, GENERATOR_OCTAVE_RANGES.Vocal.min, GENERATOR_OCTAVE_RANGES.Vocal.max);
                         sectionVocalLine.push({
-                            pitch: [newPitch],
+                            pitch: [clampedNewPitch],
                             duration: `T${Math.round(eventDuration)}`,
-                            startTick: Math.round(eventStartAbsolute),
+                            startTick: humanizeTiming(Math.round(eventStartAbsolute), 5),
                             velocity: eventDetail.velocity
                         });
                         lastGeneratedMidiPitch = newPitch;
@@ -651,26 +652,27 @@ function generateVocalLineForSong(
                         );
 
                         if (targetPitch !== null) {
+                            const clampedTargetPitch = clampToRange(targetPitch, GENERATOR_OCTAVE_RANGES.Vocal.min, GENERATOR_OCTAVE_RANGES.Vocal.max);
                             const eventAbsoluteStartTick = sectionStartTickAbsolute + currentChordSlotStartTickInSection + currentEventRelativeStartInChordSlot;
                             const isOnBeat = (eventAbsoluteStartTick % currentTicksPerBeat) < (currentTicksPerBeat / 8);
-                            const eventVelocity = getStyledVelocity(activeVocalStyle, isOnBeat, lastGeneratedMidiPitch, targetPitch, passedGetRandomElementFunc, isFalsettoEvent);
+                            const eventVelocity = getStyledVelocity(activeVocalStyle, isOnBeat, lastGeneratedMidiPitch, clampedTargetPitch, passedGetRandomElementFunc, isFalsettoEvent);
 
                             const eventToAdd = {
-                                pitch: [targetPitch],
+                                pitch: [clampedTargetPitch],
                                 duration: `T${Math.round(durationTicks)}`,
-                                startTick: Math.round(eventAbsoluteStartTick),
+                                startTick: humanizeTiming(Math.round(eventAbsoluteStartTick), 5),
                                 velocity: eventVelocity
                             };
                             sectionVocalLine.push(eventToAdd);
                             if (currentMotifStorageForChord) {
                                 currentMotifStorageForChord.events.push({
-                                    pitch: targetPitch,
+                                    pitch: clampedTargetPitch,
                                     durationTicks: Math.round(durationTicks),
                                     relativeStartTickInChord: currentEventRelativeStartInChordSlot,
                                     velocity: eventVelocity
                                 });
                             }
-                            lastGeneratedMidiPitch = targetPitch;
+                            lastGeneratedMidiPitch = clampedTargetPitch;
                         }
                     }
                     ticksProcessedInCurrentChordSlot += durationTicks;
@@ -684,13 +686,14 @@ function generateVocalLineForSong(
                 // at low velocity to avoid complete silence for that chord slot
                 if (sectionVocalLine.length === notesEmittedInSlotStart && actualChordDurationTicks > 0) {
                     const fallbackOctave = (activeVocalStyle.vocal_register_rules && activeVocalStyle.vocal_register_rules.preferred_octave) || 3;
-                    const fallbackPitch = convertVocalNoteToMidiInternal(chordRootName, NOTE_NAMES_CONST_REF, ALL_NOTES_WITH_FLATS_REF, fallbackOctave)
+                    const rawFallbackPitch = convertVocalNoteToMidiInternal(chordRootName, NOTE_NAMES_CONST_REF, ALL_NOTES_WITH_FLATS_REF, fallbackOctave)
                         || (lastGeneratedMidiPitch || 60);
+                    const fallbackPitch = clampToRange(rawFallbackPitch, GENERATOR_OCTAVE_RANGES.Vocal.min, GENERATOR_OCTAVE_RANGES.Vocal.max);
                     const fallbackDuration = Math.max(currentTicksPerBeat, Math.round(actualChordDurationTicks / 2));
                     sectionVocalLine.push({
                         pitch: [fallbackPitch],
                         duration: `T${fallbackDuration}`,
-                        startTick: Math.round(sectionStartTickAbsolute + currentChordSlotStartTickInSection),
+                        startTick: humanizeTiming(Math.round(sectionStartTickAbsolute + currentChordSlotStartTickInSection), 5),
                         velocity: humanizeVelocity(65, 10)
                     });
                     lastGeneratedMidiPitch = fallbackPitch;

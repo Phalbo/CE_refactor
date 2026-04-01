@@ -40,7 +40,7 @@ function generateTextureForSong(songData, helpers, sectionCache) {
                         let pitch = NOTE_NAMES.indexOf(n) + 60 + (octave * 12);
                         if (inversion === 1 && i > 0) pitch += 12;
                         if (inversion === 2 && i > 1) pitch += 12;
-                        return pitch;
+                        return clampToRange(pitch, GENERATOR_OCTAVE_RANGES.Texture.min, GENERATOR_OCTAVE_RANGES.Texture.max);
                     });
                 }
                 attempts++;

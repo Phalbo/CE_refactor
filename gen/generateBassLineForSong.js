@@ -301,13 +301,13 @@ function generateBassLineForSong(songData, helpers, sectionCache, bassMode = 'pa
                 while (currentTick < slot.effectiveDurationTicks) {
                     const r = Math.random();
                     let pitch = r < 0.50 ? rootPitch : (r < 0.75 ? fifthPitch : thirdPitch);
-                    pitch = Math.max(BASS_PARAMS.PITCH_RANGE.min, Math.min(BASS_PARAMS.PITCH_RANGE.max, pitch));
+                    pitch = clampToRange(pitch, GENERATOR_OCTAVE_RANGES.Bass.min, GENERATOR_OCTAVE_RANGES.Bass.max);
                     const actualDuration = Math.min(noteDuration, slot.effectiveDurationTicks - currentTick);
                     if (actualDuration <= 0) break;
                     phrase.push({
                         pitch: [pitch],
                         duration: `T${Math.round(actualDuration)}`,
-                        startTick: context.startTick + currentTick,
+                        startTick: humanizeTiming(context.startTick + currentTick, 3),
                         velocity: 70 + Math.floor(Math.random() * 15)
                     });
                     currentTick += actualDuration;
@@ -323,10 +323,7 @@ function generateBassLineForSong(songData, helpers, sectionCache, bassMode = 'pa
                         const { getChordRootAndType, NOTE_NAMES } = helpers;
                         const { root: nextRoot } = getChordRootAndType(nextSlot.chordName);
                         const nextRootPitch = NOTE_NAMES.indexOf(nextRoot) + 36;
-                        const approachPitch = Math.max(
-                            BASS_PARAMS.PITCH_RANGE.min,
-                            Math.min(BASS_PARAMS.PITCH_RANGE.max, nextRootPitch - 1)
-                        );
+                        const approachPitch = clampToRange(nextRootPitch - 1, GENERATOR_OCTAVE_RANGES.Bass.min, GENERATOR_OCTAVE_RANGES.Bass.max);
                         const lastNote = phrase[phrase.length - 1];
                         phrase[phrase.length - 1] = { ...lastNote, pitch: [approachPitch] };
                     }

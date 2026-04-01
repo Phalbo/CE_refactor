@@ -32,6 +32,7 @@ function generateDronesForSong(songData, helpers, sectionCache) {
             } else if (chance < 0.20) {
                 dronePitch = fifthPitch;
             }
+            dronePitch = clampToRange(dronePitch, GENERATOR_OCTAVE_RANGES.Drones.min, GENERATOR_OCTAVE_RANGES.Drones.max);
 
             sectionTrack.push({
                 pitch: [dronePitch],

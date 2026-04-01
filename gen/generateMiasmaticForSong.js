@@ -59,6 +59,7 @@ function generateMiasmaticForSong(songData, helpers, sectionCache) {
                     if (note.p !== 'rest') {
                         let pitch = getPitchFromSymbol(note.p, { chordName: slot.chordName, songData, helpers });
                         if (Math.random() < 0.1) pitch += 12;
+                        pitch = clampToRange(pitch, GENERATOR_OCTAVE_RANGES.Miasmatic.min, GENERATOR_OCTAVE_RANGES.Miasmatic.max);
 
                         sectionTrack.push({
                             pitch: [pitch],
