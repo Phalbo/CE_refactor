@@ -257,7 +257,6 @@ async function generateSongArchitecture() {
     if (generateButton) { generateButton.disabled = true; generateButton.classList.add('loading'); generateButton.textContent = 'Generating...'; }
     songOutputDiv.innerHTML = '<p><em>Generating your sonic architecture...</em></p>';
     glossaryChordData = {};
-    sectionCache = {};
     currentSong = createSongDocument();
     currentSong.generatedAt = new Date().toISOString();
     const actionButtonIDs = [
