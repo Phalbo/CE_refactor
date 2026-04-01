@@ -1,6 +1,6 @@
 function handleGeneratePad() {
-    if (!currentMidiData || !currentMidiData.sections) { alert("Please generate a song first."); return; }
-    const { title, bpm, sections, timeSignatureChanges } = currentMidiData;
+    if (!window.currentSong || !window.currentSong.sections) { alert("Please generate a song first."); return; }
+    const { title, bpm, sections, timeSignatureChanges } = window.currentSong;
     const chordMIDIEvents = [];
 
     sections.forEach(sectionData => {
