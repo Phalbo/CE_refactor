@@ -64,6 +64,21 @@ A new `humanizeTiming(startTick, strength)` helper in `lib/theory-helpers.js` sh
 **3 — Melodic interval constraint + directional tendency (`gen/melody-generator.js` only)**  
 *3a — Interval gate:* After a candidate pitch is selected, if the interval from the previous note exceeds 7 semitones it is rejected (unless it is the first note of the section or the previous note was held longer than 2 beats). Fallback: nearest scale note within 7 semitones.  
 *3b — Directional tendency:* Each section starts with a `melodicDirection` (+1 / −1): Verse 60 % ascending, Bridge 60 % descending, Chorus / other 50 / 50. Step-motion candidates moving in the current direction are weighted 2×. After 4 consecutive notes in the same direction the direction flips, preventing monotonous runs.
+
+**4 — Micro-timing humanization extended to remaining generators**  
+`humanizeTiming` now applied to all non-drum generators: Texture (strength 8), Drones (strength 4), Ornament (strength 3, base tick humanized once and shared between grace note and main note), Miasmatic (strength 6), Arpeggiator (strength 4). Combined with previous session, every melodic/harmonic generator except Drums and Percussion uses humanizeTiming.
+
+**5 — Drum intro/outro progressive entry and outro fade (`gen/generateDrumTrackForSong.js`)**  
+Intro sections: bars in the first third have kick only; bars in the middle third add snare and cross-stick; final third uses the full kit. Outro sections: reverse — full kit in first third, kick+snare in middle, kick only at the end. Additionally, outro velocity fades linearly to 50 % of original over the section length. Intro and outro sections are excluded from `sectionCache.drums` (never cached/replayed) since bar-relative progress is required for the progressive entry logic.
+
+**6 — Arpeggiator phrase-level rests (`lib/arpeggiator.js`)**  
+Module-level counters `_arpeggioConsecutiveSilences` and `_arpeggioLastSectionType` added. At the start of each chord slot, a silence roll decides whether the entire slot is skipped (returns empty). Silence probability: Verse 25 %, Bridge 40 %, Intro 30 %, Outro 50 %, other 10 %. To avoid complete silence, no more than 2 consecutive slots are ever silenced (counter resets at section type change).
+
+**7 — New drum patterns (4 patterns in `lib/drum-patterns-library.js`)**  
+- `reggae_one_drop_44` (weight 9): Kick and snare both on beat 3 only (classic one-drop), open hi-hat on off-beats 2.5 and 4.5. Moods: malinconico, etereo, very_normal_person.  
+- `halftime_hiphop_44` (weight 10, isShuffle): Kick on beats 1 and 10, snare on beat 3 (half-time feel). Ghost snare variation (35 %) and extra syncopated kick (20 %). Moods: ansioso, arrabbiato, very_normal_person.  
+- `trap_hihats_44` (weight 8, 32-grid): 16th-note hi-hat grid with open bursts on off-16th positions, syncopated kick. Moods: ansioso, arrabbiato.  
+- `bossa_nova_44` (weight 7): Cross-stick on 3/9/14, ride on all 8ths, foot hi-hat on 2 and 4, kick on 1/6/10. Ride bell variation (25 %). Moods: etereo, malinconico, very_normal_person.
 **Algorithmic music generator — web-based, client-side, no build step.**  
 Generates complete song structures with chords, melody, bass, drums and additional layers, exported as multi-track MIDI files. In-browser audio preview via Tone.js.
 
