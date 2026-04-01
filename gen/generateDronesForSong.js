@@ -37,7 +37,7 @@ function generateDronesForSong(songData, helpers, sectionCache) {
             sectionTrack.push({
                 pitch: [dronePitch],
                 duration: `T${slot.effectiveDurationTicks}`,
-                startTick: slot.effectiveStartTickInSection,
+                startTick: humanizeTiming(slot.effectiveStartTickInSection, 4),
                 velocity: 50
             });
         });
