@@ -507,15 +507,15 @@ async function renderSongOutput(songData, allGeneratedChordsSet, styleNote, main
  * Aggiorna la stima della durata della canzone nell'UI.
  */
 function updateEstimatedSongDuration() {
-    if (!currentMidiData || !currentMidiData.bpm || !currentMidiData.sections) return;
+    if (!window.currentSong || !window.currentSong.bpm || !window.currentSong.sections) return;
     let estimatedTotalSeconds = 0;
-    currentMidiData.sections.forEach(section => {
+    window.currentSong.sections.forEach(section => {
         const sectionTS = section.timeSignature;
         const beatsPerMeasureInSection = sectionTS[0];
         const beatUnitValueInSection = sectionTS[1];
         const ticksPerBeatForThisSectionCalc = (4 / beatUnitValueInSection) * (TICKS_PER_QUARTER_NOTE_REFERENCE || 128);
         const sectionDurationTicks = section.measures * beatsPerMeasureInSection * ticksPerBeatForThisSectionCalc;
-        estimatedTotalSeconds += (sectionDurationTicks / (TICKS_PER_QUARTER_NOTE_REFERENCE || 128)) * (60 / currentMidiData.bpm);
+        estimatedTotalSeconds += (sectionDurationTicks / (TICKS_PER_QUARTER_NOTE_REFERENCE || 128)) * (60 / window.currentSong.bpm);
     });
     const minutes = Math.floor(estimatedTotalSeconds / 60);
     const seconds = Math.round(estimatedTotalSeconds % 60);
