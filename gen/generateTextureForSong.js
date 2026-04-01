@@ -55,7 +55,7 @@ function generateTextureForSong(songData, helpers, sectionCache) {
             sectionTrack.push({
                 pitch: pitches,
                 duration: `T${slot.effectiveDurationTicks}`,
-                startTick: slot.effectiveStartTickInSection,
+                startTick: humanizeTiming(slot.effectiveStartTickInSection, 8),
                 velocity: 40
             });
         });
