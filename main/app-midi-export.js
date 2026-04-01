@@ -385,7 +385,7 @@ async function handleSavePDF() {
             doc.setFont('helvetica', 'normal');
             doc.setFontSize(7);
             doc.setTextColor(150, 150, 150);
-            doc.text('CapricEngine v5.2', MARGIN, PAGE_H - 8);
+            doc.text('CapricEngine v5.3', MARGIN, PAGE_H - 8);
             doc.text(`Page ${pageNum}`, PAGE_W - MARGIN, PAGE_H - 8, { align: 'right' });
         };
 
@@ -575,4 +575,84 @@ async function handleSavePDF() {
     } finally {
         if (btn) { btn.disabled = false; btn.textContent = 'Save PDF'; }
     }
+}
+
+// ---------------------------------------------------------------------------
+// Group 5 — Multi-track MIDI Export (Format 1)
+// ---------------------------------------------------------------------------
+function handleDownloadFullMidi() {
+    if (!window.currentSong) {
+        alert('Generate a song first.');
+        return;
+    }
+
+    const { bpm, timeSignatureChanges, tracks, title } = window.currentSong;
+
+    const activeTracks = Object.entries(tracks)
+        .filter(([key, track]) => track !== null && track.notes && track.notes.length > 0);
+
+    if (activeTracks.length === 0) {
+        alert('No tracks generated yet. Run at least one generator first.');
+        return;
+    }
+
+    const midiTracks = activeTracks.map(([key, track]) => {
+        const t = new MidiWriter.Track();
+
+        t.setTempo(bpm);
+        if (timeSignatureChanges && timeSignatureChanges.length > 0) {
+            timeSignatureChanges.forEach(change => {
+                t.setTimeSignature(change.ts[0], change.ts[1]);
+            });
+        }
+
+        t.addTrackName(track.name || key);
+        if (track.channel !== 10) {
+            t.addEvent(new MidiWriter.ProgramChangeEvent({
+                instrument: track.program || 0,
+                channel: track.channel
+            }));
+        }
+
+        const sorted = [...track.notes].sort((a, b) => a.startTick - b.startTick);
+
+        sorted.forEach(note => {
+            const pitch = Array.isArray(note.pitch) ? note.pitch : [note.pitch];
+            const validPitch = pitch.filter(p => typeof p === 'number' && p >= 0 && p <= 127);
+            if (validPitch.length === 0) return;
+
+            let durationTicks = note.durationTicks;
+            if (typeof durationTicks === 'string' && durationTicks.startsWith('T')) {
+                durationTicks = parseInt(durationTicks.slice(1), 10);
+            }
+            if (!durationTicks || durationTicks <= 0) return;
+
+            try {
+                t.addEvent(new MidiWriter.NoteEvent({
+                    pitch: validPitch,
+                    duration: `T${durationTicks}`,
+                    startTick: Math.round(note.startTick),
+                    velocity: Math.min(127, Math.max(1, note.velocity || 80)),
+                    channel: track.channel
+                }));
+            } catch (e) {
+                console.error('handleDownloadFullMidi: error adding NoteEvent:', e, note);
+            }
+        });
+
+        return t;
+    });
+
+    const writer = new MidiWriter.Writer(midiTracks);
+    const fileName = (title || 'CapricEngine')
+        .replace(/[^\w\s.-]/gi, '_')
+        .replace(/\s+/g, '_') + '_FULL.mid';
+
+    const link = document.createElement('a');
+    link.setAttribute('href', writer.dataUri());
+    link.setAttribute('download', fileName);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 }

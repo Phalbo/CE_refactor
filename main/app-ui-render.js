@@ -118,6 +118,7 @@ async function renderSongOutput(songData, allGeneratedChordsSet, styleNote, main
           <div class="btn-group-row">
             <button id="saveSongButton" class="action-button">Save Song Data</button>
             <button id="savePdfButton" class="action-button">Save PDF</button>
+            <button id="downloadFullMidiButton" class="action-button">Download Full MIDI</button>
           </div>
         </div>
     `;
