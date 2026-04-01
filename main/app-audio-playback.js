@@ -137,7 +137,7 @@ function playPreview() {
         alert('Audio preview is not available (Tone.js failed to load).');
         return;
     }
-    if (!currentMidiData || !currentMidiData.sections) {
+    if (!window.currentSong || !window.currentSong.sections) {
         alert('Generate a song first.');
         return;
     }
@@ -148,9 +148,9 @@ function playPreview() {
 
         Tone.Transport.stop();
         Tone.Transport.cancel();
-        Tone.Transport.bpm.value = currentMidiData.bpm || 120;
+        Tone.Transport.bpm.value = window.currentSong.bpm || 120;
 
-        scheduleFromChordSlots(currentMidiData.sections, currentMidiData.bpm || 120);
+        scheduleFromChordSlots(window.currentSong.sections, window.currentSong.bpm || 120);
         Tone.Transport.start('+0.1');
 
         const stopBtn = document.getElementById('stopPreviewButton');
