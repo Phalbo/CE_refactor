@@ -34,14 +34,43 @@ Generates complete song structures with chords, melody, bass, drums and addition
 
 Fully static app: HTML + CSS + vanilla JS. One PHP endpoint (`get_chord_data.php`) for chord voicing lookups. No npm, no build step, no framework. All JS loaded via `<script>` tags in `index.html` in strict dependency order.
 
-Refactor S1 complete: SongDocument defined in lib/song-document.js. Global state audit at top of that file. Wiring: pending (S2, S3).
+Refactor S1+S2 complete: SongDocument wired into generation and all generators. MIDI export reads from SongDocument. UI and preview wiring: pending (S3).
 
 **Refactor S1 change log (commit `[CE5.2] Refactor S1`):**
-- **New file**: `lib/song-document.js` — contains the global state audit comment block and `createSongDocument()` factory function + MidiTrack/NoteEvent JSDoc typedefs. No existing code is touched by this file.
-- **Modified**: `index.html` — added `<script src="lib/song-document.js">` as the very first script tag (before `lib/config-music-data.js`).
-- **No other files changed.** All existing globals (`currentMidiData`, `sectionCache`, `glossaryChordData`, `CHORD_LIB`, `currentSongDataForSave`, audio synth vars) remain exactly where they are and are not yet wired to `createSongDocument()`.
-- **Pending (S2)**: replace `currentMidiData` and `sectionCache` with a live `SongDocument` instance; update all read/write sites across `main/` and `gen/`.
-- **Pending (S3)**: remove legacy globals once all consumers are wired; validate zero MIDI output change.
+- **New file**: `lib/song-document.js` — global state audit comment block, `createSongDocument()` factory, MidiTrack/NoteEvent JSDoc typedefs.
+- **Modified**: `index.html` — `<script src="lib/song-document.js">` added as first script tag.
+
+**Refactor S2 change log (commits S2a / S2b / S2c):**
+
+*S2a — SongDocument wired into app-song-generation.js:*
+- `main/app-song-generation.js`: added `let currentSong = null;` at module level.
+- At start of each `generateSongArchitecture()` call: `currentSong = createSongDocument()` + `generatedAt`.
+- `const progressionCache = {}` replaced by `const progressionCache = currentSong.progressionCache` (alias — all writes go directly into the SongDocument).
+- After all `currentMidiData` fields are populated: `Object.assign(currentSong, currentMidiData)` copies every field; SongDocument-specific fields (`seed`, `keyRoot`, `mode`, `mood`, `structureName`, `styleNotes`, `timeSignature`, `allGeneratedChords`) set on top; then `currentMidiData = currentSong; window.currentSong = currentSong` (same object from this point).
+
+*S2b — generator outputs normalized to MidiTrack:*
+- `lib/theory-helpers.js`: added `normalizeToMidiTrack(name, channel, program, rawNotes)`. Handles MidiWriter `"T{n}"` duration strings; tries `pitch/note/midiNote`, `startTick/tick/start`, `durationTicks/duration` property-name variants.
+- `main/app-midi-export.js`: after each generator produces output, writes to `window.currentSong.tracks[key]` using `normalizeToMidiTrack`. Handlers wired: `handleGenerateMelody → tracks.melody`, `handleGenerateVocalLine → tracks.vocals`, `handleGenerateBassLine → tracks.bass`, `handleGenerateDrumTrack → tracks.drums`, `handleGenerateChordRhythm → tracks.arpeggio`, `handleGenerateSingleTrackChordMidi → tracks.pad`.
+- `gen/generatePadForTheSong.js`: same track write for `handleGeneratePad` (the button-wired pad handler).
+- `main/app-setup.js`: `addTrackToMidiData()` writes to `window.currentSong.tracks[trackKey]` for all extra generators (Countermelody, Texture, Ornament, Miasmatic, Drones, Percussion, GlitchFx).
+
+*S2c — app-midi-export reads from SongDocument:*
+- `main/app-midi-export.js`: all `currentMidiData` references replaced by `window.currentSong`. Pure semantic rename — zero behaviour change (same object after S2a).
+- `main/app-setup.js`: `addTrackToMidiData()` guard + filename/bpm reads updated to `window.currentSong`.
+
+**What was NOT changed in S2 (intentional):**
+- `main/app-ui-render.js` — still reads `currentMidiData` directly (same object; wiring pending S3).
+- `main/app-audio-playback.js` — still reads `currentMidiData` (same object; wiring pending S3).
+- `main/app-setup.js` generator call arguments (lines 154–160) — still pass `currentMidiData` to gen/ functions as `songData` parameter (same object; no change needed yet).
+- `gen/generatePadForTheSong.js` guard + destructure (lines 2–3) — still reads `currentMidiData` (same object).
+- `sectionCache` implicit global — sub-keys (melody, bass, drums, etc.) not yet mapped to SongDocument cache fields. Pending S3.
+
+**Pending (S3):**
+- Remove the legacy `currentMidiData` variable from `app-setup.js` (replace declaration with `window.currentSong`).
+- Update `app-ui-render.js` and `app-audio-playback.js` to read from `window.currentSong`.
+- Update generator call arguments in `app-setup.js` to pass `window.currentSong`.
+- Map `sectionCache` sub-keys to `currentSong.melodyCache`, `.drumCache`, etc.
+- Validate zero MIDI output change across all generators after cleanup.
 
 ### Critical data contract — do not break
 
