@@ -77,7 +77,8 @@ function generateDrumTrackForSong(
 
     songMidiData.sections.forEach(section => {
         const baseName = normalizeSectionName(section.name);
-        if (sectionCache.drums[baseName]) {
+        const isNeverCached = section.name.toLowerCase().includes('intro') || section.name.toLowerCase().includes('outro');
+        if (!isNeverCached && sectionCache.drums[baseName]) {
             const cachedDrumTrack = sectionCache.drums[baseName];
             cachedDrumTrack.forEach(event => {
                 drumEvents.push({ ...event, startTick: event.startTick + section.startTick });
@@ -99,6 +100,8 @@ function generateDrumTrackForSong(
         // Section-aware fill frequency and variation probability
         const isChorus = sectionNameLower.includes('chorus');
         const isBridge = sectionNameLower.includes('bridge');
+        const isIntro = sectionNameLower.includes('intro');
+        const isOutro = sectionNameLower.includes('outro');
         const fillFrequency = isChorus ? 0.50 : (sectionNameLower.includes('verse') ? 0.20 : defaultFillFrequency);
         const baseVariationProbability = isChorus ? 0.30 : 0.15;
 
@@ -341,10 +344,51 @@ function generateDrumTrackForSong(
                     });
                 });
             }
+            // FIX 2a/2b: intro progressive entry / outro fade
+            if (isIntro || isOutro) {
+                const progress = barInSection / Math.max(sectionMeasures - 1, 1);
+                let allowedInstruments = null;
+                if (isIntro) {
+                    if (progress < 0.33) {
+                        allowedInstruments = new Set([DRUM_MAP_DRUMS_LIB.KICK]);
+                    } else if (progress < 0.66) {
+                        allowedInstruments = new Set([
+                            DRUM_MAP_DRUMS_LIB.KICK,
+                            DRUM_MAP_DRUMS_LIB.SNARE,
+                            DRUM_MAP_DRUMS_LIB.CROSS_STICK
+                        ]);
+                    }
+                }
+                if (isOutro) {
+                    if (progress > 0.66) {
+                        allowedInstruments = new Set([DRUM_MAP_DRUMS_LIB.KICK]);
+                    } else if (progress > 0.33) {
+                        allowedInstruments = new Set([
+                            DRUM_MAP_DRUMS_LIB.KICK,
+                            DRUM_MAP_DRUMS_LIB.SNARE,
+                            DRUM_MAP_DRUMS_LIB.CROSS_STICK
+                        ]);
+                    }
+                }
+                if (allowedInstruments !== null) {
+                    measureSpecificEventsMIDI = measureSpecificEventsMIDI.filter(ev => {
+                        const p = Array.isArray(ev.pitch) ? ev.pitch[0] : ev.pitch;
+                        return allowedInstruments.has(p);
+                    });
+                }
+                if (isOutro) {
+                    const fadeMultiplier = 1.0 - (barInSection / sectionMeasures) * 0.5;
+                    measureSpecificEventsMIDI = measureSpecificEventsMIDI.map(ev => ({
+                        ...ev,
+                        velocity: Math.max(20, Math.round((ev.velocity || 80) * fadeMultiplier))
+                    }));
+                }
+            }
+
             sectionDrumTrack.push(...measureSpecificEventsMIDI);
         }
 
-        if (sectionDrumTrack.length > 0) {
+        if (!isNeverCached && sectionDrumTrack.length > 0) {
             const cachedSectionDrums = sectionDrumTrack.map(event => ({
                 ...event,
                 startTick: event.startTick - section.startTick
