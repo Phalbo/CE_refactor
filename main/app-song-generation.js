@@ -256,13 +256,10 @@ async function generateSongArchitecture() {
 
     if (generateButton) { generateButton.disabled = true; generateButton.classList.add('loading'); generateButton.textContent = 'Generating...'; }
     songOutputDiv.innerHTML = '<p><em>Generating your sonic architecture...</em></p>';
-    currentSongDataForSave = null; currentMidiData = {};
     glossaryChordData = {};
     sectionCache = {};
     currentSong = createSongDocument();
     currentSong.generatedAt = new Date().toISOString();
-
-    if (midiSectionTitleElement) midiSectionTitleElement.style.display = 'none';
     const actionButtonIDs = [
         'saveSongButton', 'downloadSingleTrackChordMidiButton', 'generateChordRhythmButton',
         'generateMelodyButton', 'generateVocalLineButton', 'generateBassLineButton', 'generateDrumTrackButton'
@@ -353,7 +350,7 @@ async function generateSongArchitecture() {
 
         const styleNote = moodProfile.styleNotes || "Experiment.";
 
-        currentMidiData = {
+        let songData = {
             title: songTitle, displayTitle: displaySongTitle, bpm: bpm, timeSignatureChanges: [], sections: [],
             keySignatureRoot: selectedKey.root, keyModeName: selectedKey.mode,
             fullKeyName: selectedKey.name || (selectedKey.root + " " + selectedKey.mode),
@@ -411,7 +408,7 @@ async function generateSongArchitecture() {
                 finalMeasures,
                 activeTimeSignatureForSectionLogic,
                 progressionCache,
-                currentMidiData
+                songData
             );
 
             // Group 7: energy arc — 0 (quiet) to 1 (peak)
@@ -492,9 +489,9 @@ async function generateSongArchitecture() {
         });
         // --- FINE FASE DI CREAZIONE mainChordSlots ---
 
-        currentMidiData.sections = rawMidiSectionsData;
-        currentMidiData.timeSignatureChanges = timeSignatureChanges;
-        currentMidiData.totalMeasures = totalSongMeasures;
+        songData.sections = rawMidiSectionsData;
+        songData.timeSignatureChanges = timeSignatureChanges;
+        songData.totalMeasures = totalSongMeasures;
 
         const mainScaleText = getScaleNotesText(selectedKey.root, selectedKey.mode);
         const mainScaleParts = mainScaleText.split(':'); let mainScaleParsedNotes = []; let mainScaleParsedRoot = selectedKey.root; let mainScaleParsedName = selectedKey.mode;
@@ -524,10 +521,10 @@ async function generateSongArchitecture() {
                 }
             }
         }
-        currentMidiData.mainScaleNotes = mainScaleParsedNotes;
-        currentMidiData.mainScaleRoot = mainScaleParsedRoot;
-        currentMidiData.songSeed = songSeed;
-        currentMidiData.songId = songId;
+        songData.mainScaleNotes = mainScaleParsedNotes;
+        songData.mainScaleRoot = mainScaleParsedRoot;
+        songData.songSeed = songSeed;
+        songData.songId = songId;
 
         rawMidiSectionsData.forEach(section => {
             if (section.key && section.scale) {
@@ -538,12 +535,8 @@ async function generateSongArchitecture() {
             }
         });
 
-        // --- Populate SongDocument fields and unify currentMidiData with currentSong ---
-        // Copy every property built onto currentMidiData onto the SongDocument so that
-        // all existing consumers (app-ui-render, app-audio-playback, generators) that
-        // still reference currentMidiData automatically get the SongDocument object.
-        Object.assign(currentSong, currentMidiData);
-        // SongDocument-specific names (different from the legacy currentMidiData names):
+        // --- Populate SongDocument ---
+        Object.assign(currentSong, songData);
         currentSong.seed          = songSeed;
         currentSong.keyRoot        = selectedKey.root;
         currentSong.mode           = selectedKey.mode;
@@ -552,13 +545,11 @@ async function generateSongArchitecture() {
         currentSong.styleNotes     = styleNote;
         currentSong.timeSignature  = timeSignatureChanges[0]?.ts || [4, 4];
         currentSong.allGeneratedChords = allGeneratedChordsSet;
-        // From here on, currentMidiData and currentSong are the same object.
-        currentMidiData = currentSong;
         window.currentSong = currentSong;
         // --- End SongDocument population ---
 
         if (typeof renderSongOutput === "function") {
-            renderSongOutput(currentMidiData, allGeneratedChordsSet, styleNote, mainScaleText, mainScaleParsedNotes, mainScaleParsedRoot, mainScaleParsedName);
+            renderSongOutput(currentSong, allGeneratedChordsSet, styleNote, mainScaleText, mainScaleParsedNotes, mainScaleParsedRoot, mainScaleParsedName);
         } else {
             songOutputDiv.innerHTML = "<p>Errore: Funzione di rendering UI non trovata.</p>";
         }
@@ -571,8 +562,6 @@ async function generateSongArchitecture() {
         }
 
         console.log("Progression cache during generation:", progressionCache);
-
-        if (midiSectionTitleElement) midiSectionTitleElement.style.display = 'block';
 
         const actionButtonsContainer = document.getElementById('action-buttons');
         if(actionButtonsContainer) actionButtonsContainer.style.display = 'flex';
