@@ -167,6 +167,12 @@ function addTrackToMidiData(trackName, trackEvents) {
         return;
     }
     if (trackEvents && trackEvents.length > 0) {
+        if (window.currentSong && typeof normalizeToMidiTrack === 'function') {
+            const _im = (typeof INSTRUMENT_MAP !== 'undefined' && INSTRUMENT_MAP[trackName]) || { channel: 1, program: 0 };
+            // SongDocument track keys start with a lower-case letter (e.g. 'GlitchFx' → 'glitchFx')
+            const trackKey = trackName.charAt(0).toLowerCase() + trackName.slice(1);
+            window.currentSong.tracks[trackKey] = normalizeToMidiTrack(trackName, _im.channel, _im.program, trackEvents);
+        }
         const fileName = `${currentMidiData.title.replace(/[^a-zA-Z0-9_]/g, '_')}_${trackName}.mid`;
         downloadSingleTrackMidi(trackName, trackEvents, fileName, currentMidiData.bpm, currentMidiData.timeSignatureChanges);
     } else {

@@ -187,6 +187,10 @@ function handleGenerateSingleTrackChordMidi(returnOnly = false) {
 
     if (returnOnly) return chordMIDIEvents;
 
+    if (window.currentSong && typeof normalizeToMidiTrack === 'function' && chordMIDIEvents.length > 0) {
+        const _im = (typeof INSTRUMENT_MAP !== 'undefined' && INSTRUMENT_MAP['Pad']) || { channel: 1, program: 89 };
+        window.currentSong.tracks.pad = normalizeToMidiTrack('Pad', _im.channel, _im.program, chordMIDIEvents);
+    }
     const midiFileNameST = `${title.replace(/[^a-zA-Z0-9_]/g, '_')}_Pad.mid`;
     downloadSingleTrackMidi(`Pad`, chordMIDIEvents, midiFileNameST, bpm, timeSignatureChanges);
 }
@@ -222,6 +226,10 @@ function handleGenerateChordRhythm(returnOnly = false) {
         });
 
         if (allRhythmicChordEvents.length > 0) {
+            if (window.currentSong && typeof normalizeToMidiTrack === 'function') {
+                const _im = (typeof INSTRUMENT_MAP !== 'undefined' && INSTRUMENT_MAP['Arpeggio']) || { channel: 12, program: 98 };
+                window.currentSong.tracks.arpeggio = normalizeToMidiTrack('Arpeggio', _im.channel, _im.program, allRhythmicChordEvents);
+            }
             const fileName = `${currentMidiData.title.replace(/[^a-zA-Z0-9_]/g, '_')}_Arpeggio.mid`;
             downloadSingleTrackMidi(`Arpeggio`, allRhythmicChordEvents, fileName, currentMidiData.bpm, currentMidiData.timeSignatureChanges);
         } else {
@@ -246,6 +254,10 @@ function handleGenerateMelody() {
     try {
         const generatedMelody = generateMelodyForSong(currentMidiData, currentMidiData.mainScaleNotes, currentMidiData.mainScaleRoot, CHORD_LIB, scales, NOTE_NAMES, allNotesWithFlats, getChordNotes, getNoteName, getRandomElement, getChordRootAndType, sectionCache);
         if (generatedMelody && generatedMelody.length > 0) {
+            if (window.currentSong && typeof normalizeToMidiTrack === 'function') {
+                const _im = (typeof INSTRUMENT_MAP !== 'undefined' && INSTRUMENT_MAP['Melody']) || { channel: 2, program: 80 };
+                window.currentSong.tracks.melody = normalizeToMidiTrack('Melody', _im.channel, _im.program, generatedMelody);
+            }
             const fileName = `${currentMidiData.title.replace(/[^a-zA-Z0-9_]/g, '_')}_Melody.mid`;
             downloadSingleTrackMidi(`Melody`, generatedMelody, fileName, currentMidiData.bpm, currentMidiData.timeSignatureChanges);
         } else { alert("Could not generate a melody with the current data."); }
@@ -268,6 +280,10 @@ function handleGenerateVocalLine() {
         const options = { globalRandomActivationProbability: 0.6 };
         const vocalLine = generateVocalLineForSong(currentMidiData, currentMidiData.mainScaleNotes, currentMidiData.mainScaleRoot, CHORD_LIB, scales, NOTE_NAMES, allNotesWithFlats, getChordNotes, getNoteName, getRandomElement, getChordRootAndType, options, sectionCache);
         if (vocalLine && vocalLine.length > 0) {
+            if (window.currentSong && typeof normalizeToMidiTrack === 'function') {
+                const _im = (typeof INSTRUMENT_MAP !== 'undefined' && INSTRUMENT_MAP['Vocal']) || { channel: 3, program: 54 };
+                window.currentSong.tracks.vocals = normalizeToMidiTrack('Vocal', _im.channel, _im.program, vocalLine);
+            }
             const fileName = `${currentMidiData.title.replace(/[^a-zA-Z0-9_]/g, '_')}_Vocal.mid`;
             downloadSingleTrackMidi(`Vocal`, vocalLine, fileName, currentMidiData.bpm, currentMidiData.timeSignatureChanges);
         } else { alert("Could not generate a vocal line with the current data."); }
@@ -300,6 +316,10 @@ function handleGenerateBassLine() {
         const bassMode = bassModeRaw === 'random' ? (['pattern','walking','generative'])[Math.floor(Math.random()*3)] : bassModeRaw;
         const bassLine = generateBassLineForSong(currentMidiData, helpers, sectionCache, bassMode);
         if (bassLine && bassLine.length > 0) {
+            if (window.currentSong && typeof normalizeToMidiTrack === 'function') {
+                const _im = (typeof INSTRUMENT_MAP !== 'undefined' && INSTRUMENT_MAP['Bass']) || { channel: 4, program: 33 };
+                window.currentSong.tracks.bass = normalizeToMidiTrack('Bass', _im.channel, _im.program, bassLine);
+            }
             const fileName = `${currentMidiData.title.replace(/[^a-zA-Z0-9_]/g, '_')}_Bass.mid`;
             downloadSingleTrackMidi(`Bass`, bassLine, fileName, currentMidiData.bpm, currentMidiData.timeSignatureChanges);
         } else { alert("Could not generate a bass line with the current data."); }
@@ -323,6 +343,10 @@ function handleGenerateDrumTrack() {
         const drumTrackOptions = { globalRandomActivationProbability: 0.6, fillFrequency: 0.25 };
         const drumEvents = generateDrumTrackForSong(currentMidiData, currentMidiData.bpm, null, currentMidiData.sections, CHORD_LIB, NOTE_NAMES, getRandomElement, drumTrackOptions, sectionCache);
         if (drumEvents && drumEvents.length > 0) {
+            if (window.currentSong && typeof normalizeToMidiTrack === 'function') {
+                const _im = (typeof INSTRUMENT_MAP !== 'undefined' && INSTRUMENT_MAP['Drums']) || { channel: 10, program: 0 };
+                window.currentSong.tracks.drums = normalizeToMidiTrack('Drums', _im.channel, _im.program, drumEvents);
+            }
             const fileName = `${currentMidiData.title.replace(/[^a-zA-Z0-9_]/g, '_')}_Drums.mid`;
             downloadSingleTrackMidi(`Drums`, drumEvents, fileName, currentMidiData.bpm, currentMidiData.timeSignatureChanges);
         } else { alert("Could not generate a drum track with the current data."); }
