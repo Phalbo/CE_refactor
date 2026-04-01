@@ -44,6 +44,10 @@ function handleGeneratePad() {
             });
         }
     });
+    if (window.currentSong && typeof normalizeToMidiTrack === 'function' && chordMIDIEvents.length > 0) {
+        const _im = (typeof INSTRUMENT_MAP !== 'undefined' && INSTRUMENT_MAP['Pad']) || { channel: 1, program: 89 };
+        window.currentSong.tracks.pad = normalizeToMidiTrack('Pad', _im.channel, _im.program, chordMIDIEvents);
+    }
     const midiFileNameST = `${title.replace(/[^a-zA-Z0-9_]/g, '_')}_Pad.mid`;
     downloadSingleTrackMidi(`Pad for ${title}`, chordMIDIEvents, midiFileNameST, bpm, timeSignatureChanges, 0);
 }
