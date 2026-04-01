@@ -40,11 +40,12 @@ function generateCountermelodyForSong(songData, helpers, sectionCache) {
                 if (!melodyRhythmMap[beatStartTick]) { // Fill rhythmic gaps
                     let melodyDirection = getMelodyDirection(melodyEvents, beatStartTick);
                     let counterPitch = selectPitchForContraryMotion(lastCounterPitch, melodyDirection, chordPitches);
+                    counterPitch = clampToRange(counterPitch, GENERATOR_OCTAVE_RANGES.Countermelody.min, GENERATOR_OCTAVE_RANGES.Countermelody.max);
 
                     sectionTrack.push({
                         pitch: [counterPitch],
                         duration: `T${ticksPerBeat}`, // Eighth note
-                        startTick: slot.effectiveStartTickInSection + currentTickInSlot,
+                        startTick: humanizeTiming(slot.effectiveStartTickInSection + currentTickInSlot, 7),
                         velocity: 70
                     });
                     lastCounterPitch = counterPitch;

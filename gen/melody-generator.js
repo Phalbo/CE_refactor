@@ -107,6 +107,14 @@ function generateMelodyForSong(songMidiData, mainScaleNotes, mainScaleRoot, CHOR
         const sectionRhythmPattern = getRandomElement_GLOBAL(densityPatternPool)
             || MELODY_GENERATION_PARAMS.rhythmicVarietyPatterns[0];
 
+        // FIX 3b: melodic direction per section
+        let melodicDirection = Math.random() < 0.5 ? 1 : -1;
+        if (sectionNameLower.includes('verse')) melodicDirection = Math.random() < 0.6 ? 1 : -1;
+        else if (sectionNameLower.includes('bridge')) melodicDirection = Math.random() < 0.6 ? -1 : 1;
+        let consecutiveDirectionCount = 0;
+        let isFirstNoteOfSection = true;
+        let lastMelodyNoteDuration = null;
+
         sectionData.mainChordSlots.forEach(chordSlot => {
             const chordName = chordSlot.chordName;
             // Calcola il tick di inizio assoluto dello slot sommando l'inizio della sezione e l'inizio relativo dello slot.
@@ -179,7 +187,14 @@ function generateMelodyForSong(songMidiData, mainScaleNotes, mainScaleRoot, CHOR
                             .sort((a, b) => a.diff - b.diff);
 
                         if (closestPitches.length > 0) {
-                            targetPitch = getRandomElement_GLOBAL(closestPitches.slice(0, Math.min(3, closestPitches.length))).pitch;
+                            // FIX 3b: weight candidates in current melodic direction 2x
+                            const top = closestPitches.slice(0, Math.min(3, closestPitches.length));
+                            const weighted = [];
+                            for (const c of top) {
+                                weighted.push(c.pitch);
+                                if ((c.pitch - lastMelodyNotePitch) * melodicDirection > 0) weighted.push(c.pitch);
+                            }
+                            targetPitch = getRandomElement_GLOBAL(weighted);
                         }
                     }
 
@@ -194,30 +209,71 @@ function generateMelodyForSong(songMidiData, mainScaleNotes, mainScaleRoot, CHOR
                         }
                     }
 
+                    // FIX 3a: reject intervals >7 semitones (unless first note or prev held >2 beats)
+                    if (targetPitch !== null && !isFirstNoteOfSection && lastMelodyNotePitch !== null) {
+                        const prevHeldLong = lastMelodyNoteDuration !== null && lastMelodyNoteDuration > 2 * TPQN_MELODY;
+                        if (!prevHeldLong && Math.abs(targetPitch - lastMelodyNotePitch) > 7) {
+                            const stepCandidates = availableNotesForSlot.map(noteIdx => {
+                                const base = noteIdx + MELODY_GENERATION_PARAMS.octaveBase * 12;
+                                return [base - 12, base, base + 12];
+                            }).flat().filter(p => p >= minPitch && p <= maxPitch && Math.abs(p - lastMelodyNotePitch) <= 7);
+                            if (stepCandidates.length > 0) {
+                                targetPitch = stepCandidates.reduce((best, p) =>
+                                    Math.abs(p - lastMelodyNotePitch) < Math.abs(best - lastMelodyNotePitch) ? p : best
+                                );
+                            }
+                        }
+                    }
+                    // FIX 2: clamp to Melody octave range
+                    if (targetPitch !== null) {
+                        targetPitch = clampToRange(targetPitch, GENERATOR_OCTAVE_RANGES.Melody.min, GENERATOR_OCTAVE_RANGES.Melody.max);
+                    }
                     if (targetPitch !== null) {
                         sectionMelody.push({
                             pitch: [targetPitch],
                             duration: `T${Math.round(actualNoteDuration)}`,
-                            startTick: slotStartTickAbsolute + currentRelativeTick,
+                            startTick: humanizeTiming(slotStartTickAbsolute + currentRelativeTick, 6),
                             velocity: humanizeVelocity(75, 15, (slotStartTickAbsolute + currentRelativeTick) % TPQN_MELODY, TPQN_MELODY)
                         });
+                        // FIX 3b: update directional tracking
+                        if (lastMelodyNotePitch !== null) {
+                            const moved = targetPitch - lastMelodyNotePitch;
+                            if (moved !== 0) {
+                                const dir = moved > 0 ? 1 : -1;
+                                if (dir === melodicDirection) {
+                                    consecutiveDirectionCount++;
+                                    if (consecutiveDirectionCount >= 4) {
+                                        melodicDirection = -melodicDirection;
+                                        consecutiveDirectionCount = 0;
+                                    }
+                                } else {
+                                    melodicDirection = dir;
+                                    consecutiveDirectionCount = 1;
+                                }
+                            }
+                        }
                         lastMelodyNotePitch = targetPitch;
+                        lastMelodyNoteDuration = actualNoteDuration;
+                        isFirstNoteOfSection = false;
                     }
                     tickInRhythmicPattern += actualNoteDuration;
                 }
                 if (tickInRhythmicPattern === 0) {
                     // Zero-advance fallback: emit a quarter-note on the chord root
                     const rootPitchClass = chordToneIndices.length > 0 ? chordToneIndices[0] : scaleNoteIndices[0];
-                    const fallbackPitch = rootPitchClass + MELODY_GENERATION_PARAMS.octaveBase * 12;
+                    const rawFallbackPitch = rootPitchClass + MELODY_GENERATION_PARAMS.octaveBase * 12;
+                    const fallbackPitch = clampToRange(rawFallbackPitch, GENERATOR_OCTAVE_RANGES.Melody.min, GENERATOR_OCTAVE_RANGES.Melody.max);
                     const fallbackDuration = Math.min(TPQN_MELODY, slotDurationTicks - currentTickInSlot);
                     if (fallbackDuration > 0) {
                         sectionMelody.push({
                             pitch: [fallbackPitch],
                             duration: `T${fallbackDuration}`,
-                            startTick: slotStartTickAbsolute + currentTickInSlot,
+                            startTick: humanizeTiming(slotStartTickAbsolute + currentTickInSlot, 6),
                             velocity: humanizeVelocity(72, 10)
                         });
                         lastMelodyNotePitch = fallbackPitch;
+                        lastMelodyNoteDuration = fallbackDuration;
+                        isFirstNoteOfSection = false;
                         currentTickInSlot += fallbackDuration;
                     } else {
                         currentTickInSlot = slotDurationTicks;

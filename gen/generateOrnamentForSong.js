@@ -37,7 +37,7 @@ function generateOrnamentForSong(songData, helpers) {
                     const targetNote = chordNotes[1] || chordNotes[0];
                     if (!targetNote) continue;
 
-                    const pitch = NOTE_NAMES.indexOf(targetNote) + 60;
+                    let pitch = clampToRange(NOTE_NAMES.indexOf(targetNote) + 60, GENERATOR_OCTAVE_RANGES.Ornament.min, GENERATOR_OCTAVE_RANGES.Ornament.max);
                     const ornamentStartTick = slot.effectiveStartTickInSection + (beat * ticksPerBeat);
 
                     // Build chord pitch classes for priority lookup

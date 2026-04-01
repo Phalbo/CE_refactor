@@ -21,6 +21,7 @@ function handleGeneratePad() {
                         }).filter(n => n !== null);
 
                         if (midiNoteNumbers.length > 0) {
+                            midiNoteNumbers = midiNoteNumbers.map(p => clampToRange(p, GENERATOR_OCTAVE_RANGES.Pad.min, GENERATOR_OCTAVE_RANGES.Pad.max));
                             // Add inversion logic
                             if (Math.random() < 0.12) { // 12% chance of inversion
                                 const inversionType = Math.random() < 0.5 ? 1 : 2; // 50/50 first or second
@@ -35,7 +36,7 @@ function handleGeneratePad() {
                             chordMIDIEvents.push({
                                 pitch: midiNoteNumbers,
                                 duration: `T${Math.round(slot.effectiveDurationTicks)}`,
-                                startTick: sectionData.startTick + slot.effectiveStartTickInSection,
+                                startTick: humanizeTiming(sectionData.startTick + slot.effectiveStartTickInSection, 8),
                                 velocity: 60,
                             });
                         }

@@ -59,7 +59,7 @@ function generateGlitchFxForSong(songData, helpers, sectionCache) {
             if (Math.random() < 0.25) {
                 const effectName = getRandomElement(Object.keys(GLITCH_EFFECTS));
                 const randomNoteName = getRandomElement(scaleNotes);
-                const pitch = NOTE_NAMES.indexOf(randomNoteName) + 60;
+                const pitch = clampToRange(NOTE_NAMES.indexOf(randomNoteName) + 60, GENERATOR_OCTAVE_RANGES.GlitchFx.min, GENERATOR_OCTAVE_RANGES.GlitchFx.max);
 
                 // Quantize to the nearest 16th or 32nd note
                 const quantizationGrid = [32, 64]; // Ticks for 16th and 32nd notes
