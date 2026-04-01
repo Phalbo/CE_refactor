@@ -1,4 +1,4 @@
-# CapricEngine v5.2
+# CapricEngine v5.3
 ## Refactor status
 
 **S1 — Complete**
@@ -79,6 +79,15 @@ Module-level counters `_arpeggioConsecutiveSilences` and `_arpeggioLastSectionTy
 - `halftime_hiphop_44` (weight 10, isShuffle): Kick on beats 1 and 10, snare on beat 3 (half-time feel). Ghost snare variation (35 %) and extra syncopated kick (20 %). Moods: ansioso, arrabbiato, very_normal_person.  
 - `trap_hihats_44` (weight 8, 32-grid): 16th-note hi-hat grid with open bursts on off-16th positions, syncopated kick. Moods: ansioso, arrabbiato.  
 - `bossa_nova_44` (weight 7): Cross-stick on 3/9/14, ride on all 8ths, foot hi-hat on 2 and 4, kick on 1/6/10. Ride bell variation (25 %). Moods: etereo, malinconico, very_normal_person.
+
+## v5.3 — What's new
+
+**Download Full MIDI (`handleDownloadFullMidi` in `main/app-midi-export.js`)**  
+New "Download Full MIDI" button in the Export group of the action bar. Exports a single MIDI Format 1 file (`[title]_FULL.mid`) containing all currently generated tracks as separate channels. Only includes tracks that have been run (non-null in `window.currentSong.tracks`). Channel 10 (Drums/Percussion) never receives a program change event. Track name, BPM, and time signature changes are written to every MIDI track as required by Format 1. Wired via `addListener('downloadFullMidiButton', handleDownloadFullMidi)` in `app-setup.js`.
+
+**Header redesign**  
+Logo (`CapricEngine_LogoW.svg`) centered, slightly enlarged (80 px → 90 px, +12.5 %). Redundant text wordmark removed — the SVG already contains the logotype. Version badge retained.
+
 **Algorithmic music generator — web-based, client-side, no build step.**  
 Generates complete song structures with chords, melody, bass, drums and additional layers, exported as multi-track MIDI files. In-browser audio preview via Tone.js.
 

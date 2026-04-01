@@ -139,6 +139,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         addListener('saveSongButton', handleSaveSong);
         addListener('savePdfButton', handleSavePDF);
+        addListener('downloadFullMidiButton', handleDownloadFullMidi);
         addListener('previewButton', playPreview);
         addListener('stopPreviewButton', stopPreview);
         addListener('downloadSingleTrackChordMidiButton', handleGeneratePad);
