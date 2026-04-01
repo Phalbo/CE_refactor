@@ -11,8 +11,42 @@
 - `lib/theory-helpers.js`: `normalizeToMidiTrack()` added.
 - `main/app-midi-export.js`, `main/app-setup.js`, `gen/generatePadForTheSong.js`: all generators write to `window.currentSong.tracks[key]`. `app-midi-export.js` reads from `window.currentSong` throughout.
 
-**S3 — Pending**
-Wire `app-ui-render.js`, `app-audio-playback.js`, PDF export to `window.currentSong`. Remove all old globals. Full verification.
+**S3 — Complete**
+
+SongDocument refactor complete (v5.2).
+Single source of truth: `window.currentSong` (`createSongDocument()`).
+All generators write to `window.currentSong.tracks`.
+All renderers, MIDI export, audio preview, and PDF read from `window.currentSong`.
+No song data in other globals.
+
+**Refactor S3 change log (commits S3a–S3d):**
+
+*S3a — app-ui-render.js reads from SongDocument:*
+- `updateEstimatedSongDuration()`: `currentMidiData` → `window.currentSong`.
+- `renderSongOutput()` was already receiving `songData` as a parameter (unchanged).
+
+*S3b — audio preview reads from SongDocument:*
+- `app-audio-playback.js` `playPreview()`: guard check, BPM, and `sections` passed to `scheduleFromChordSlots()` all changed from `currentMidiData` to `window.currentSong`.
+
+*S3c — PDF export and pad generator read from SongDocument:*
+- `gen/generatePadForTheSong.js`: guard + destructure changed from `currentMidiData` to `window.currentSong`.
+- `app-midi-export.js` `handleSavePDF()` was already migrated in S2c (no change).
+
+*S3d — global cleanup, old song globals removed:*
+- **Removed globals** (were declared in `app-setup.js`): `currentMidiData`, `currentSongDataForSave`, `midiSectionTitleElement`.
+- `app-setup.js`: generator call arguments (Countermelody, Texture, Ornament, Miasmatic, Drones, Percussion, GlitchFx) updated from `currentMidiData` to `window.currentSong`.
+- `app-song-generation.js`: `currentMidiData` inside `generateSongArchitecture()` replaced by local variable `songData`; `midiSectionTitleElement` guard lines removed; `renderSongOutput()` now passed `currentSong` directly; superfluous pre-warm call to `buildSongDataForTextFile()` removed.
+- `app-midi-export.js`: `buildSongDataForTextFile()` now returns its value instead of writing to a global; `handleSaveSong()` uses the return value via a local variable.
+
+**Globals that remain (intentional — not song data):**
+- `glossaryChordData` / `window.glossaryChordData`: UI state for chord glossary navigation; rebuilt on every render.
+- `CHORD_LIB`: chord library built from config at startup; shared across all modules.
+- `sectionCache`: implicit global (no declaration) in `app-song-generation.js`; per-instrument section cache reset on each generation. Sub-keys: melody, bass, drums, vocal, countermelody, texture, drones, ornament, miasmatic, percussion, glitch. Intentionally not wired to SongDocument caches (would require changing generator function signatures).
+- `currentSong` (module-level `let` in `app-song-generation.js`): local reference used only within that file; `window.currentSong` is the canonical external reference.
+- `_overrideTitle` (`window._overrideTitle`): title override for "regenerate from title"; consumed once then nulled.
+
+**What is NOT pending (S3 is the final session):**
+Nothing. The refactor is complete.
 **Algorithmic music generator — web-based, client-side, no build step.**  
 Generates complete song structures with chords, melody, bass, drums and additional layers, exported as multi-track MIDI files. In-browser audio preview via Tone.js.
 
@@ -47,7 +81,7 @@ Generates complete song structures with chords, melody, bass, drums and addition
 
 Fully static app: HTML + CSS + vanilla JS. One PHP endpoint (`get_chord_data.php`) for chord voicing lookups. No npm, no build step, no framework. All JS loaded via `<script>` tags in `index.html` in strict dependency order.
 
-Refactor S1+S2 complete: SongDocument wired into generation and all generators. MIDI export reads from SongDocument. UI and preview wiring: pending (S3).
+SongDocument refactor complete (S1+S2+S3). Single source of truth: `window.currentSong`. All generators, renderers, MIDI export, audio preview, and PDF read from and write to `window.currentSong`.
 
 **Refactor S1 change log (commit `[CE5.2] Refactor S1`):**
 - **New file**: `lib/song-document.js` — global state audit comment block, `createSongDocument()` factory, MidiTrack/NoteEvent JSDoc typedefs.

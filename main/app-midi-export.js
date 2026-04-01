@@ -3,8 +3,7 @@
 
 function buildSongDataForTextFile() {
     if (!window.currentSong) {
-        currentSongDataForSave = {title: "Error", content: "No song data available."};
-        return;
+        return {title: "Error", content: "No song data available."};
     }
 
     const {title, bpm, timeSignatureChanges, sections, fullKeyName} = window.currentSong;
@@ -53,20 +52,20 @@ function buildSongDataForTextFile() {
             songDataText += `Chords: [ ${chordsWithDuration.join(' | ')} ]\n`;
         }
     });
-    currentSongDataForSave = {title: title, content: songDataText};
+    return {title: title, content: songDataText};
 }
 
 function handleSaveSong() {
-    buildSongDataForTextFile();
-    if(!currentSongDataForSave || !currentSongDataForSave.content) {
+    const songDataForSave = buildSongDataForTextFile();
+    if(!songDataForSave || !songDataForSave.content) {
         alert("No song data to save. Please generate a song first.");
         return;
     }
-    const blob = new Blob([currentSongDataForSave.content],{type:'text/plain;charset=utf-8'});
+    const blob = new Blob([songDataForSave.content],{type:'text/plain;charset=utf-8'});
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
     link.setAttribute('href',url);
-    const fileName = (currentSongDataForSave.title || "Phalbo_Caprice").replace(/[^\w\s.-]/gi,'_').replace(/\s+/g,'_') + '.txt';
+    const fileName = (songDataForSave.title || "Phalbo_Caprice").replace(/[^\w\s.-]/gi,'_').replace(/\s+/g,'_') + '.txt';
     link.setAttribute('download',fileName);
     link.style.visibility='hidden';
     document.body.appendChild(link);

@@ -1,11 +1,8 @@
 // File: app-setup.js - v5.2
 // Setup, UI listeners, toast notifications, seed UI, Ctrl+Enter.
 
-let currentSongDataForSave = null;
 let glossaryChordData = {};
 let CHORD_LIB = {};
-let currentMidiData = null; // Dati della canzone attualmente generata
-let midiSectionTitleElement = null;
 
 /** Show a transient toast notification. */
 function showToast(msg, type = 'success', duration = 3000) {
@@ -151,13 +148,13 @@ document.addEventListener('DOMContentLoaded', () => {
         addListener('generateBassLineButton', handleGenerateBassLine);
         addListener('generateDrumTrackButton', handleGenerateDrumTrack);
 
-        addListener('generateCountermelodyButton', () => addTrackToMidiData('Countermelody', generateCountermelodyForSong(currentMidiData, { getChordNotes, NOTE_NAMES, normalizeSectionName, getRandomElement, getPitchFromSymbol, getChordRootAndType, getDiatonicChords }, sectionCache)));
-        addListener('generateTextureButton', () => addTrackToMidiData('Texture', generateTextureForSong(currentMidiData, { getChordNotes, NOTE_NAMES, normalizeSectionName, getRandomElement, getChordRootAndType }, sectionCache)));
-        addListener('generateOrnamentButton', () => addTrackToMidiData('Ornament', generateOrnamentForSong(currentMidiData, { getChordNotes, NOTE_NAMES, normalizeSectionName, getRandomElement, getPitchFromSymbol, getChordRootAndType, getDiatonicChords }, sectionCache)));
-        addListener('generateMiasmaticButton', () => addTrackToMidiData('Miasmatic', generateMiasmaticForSong(currentMidiData, { getChordNotes, NOTE_NAMES, normalizeSectionName, getRandomElement, getPitchFromSymbol, getChordRootAndType, getDiatonicChords }, sectionCache)));
-        addListener('generateDronesButton', () => addTrackToMidiData('Drones', generateDronesForSong(currentMidiData, { getChordNotes, NOTE_NAMES, normalizeSectionName, getRandomElement, getPitchFromSymbol, getChordRootAndType, getDiatonicChords }, sectionCache)));
-        addListener('generatePercussionButton', () => addTrackToMidiData('Percussion', generatePercussionForSong(currentMidiData, { getChordNotes, NOTE_NAMES, normalizeSectionName, getRandomElement, getPitchFromSymbol, getChordRootAndType, getDiatonicChords }, sectionCache)));
-        addListener('generateGlitchFxButton', () => addTrackToMidiData('GlitchFx', generateGlitchFxForSong(currentMidiData, { getChordNotes, NOTE_NAMES, normalizeSectionName, getRandomElement }, sectionCache)));
+        addListener('generateCountermelodyButton', () => addTrackToMidiData('Countermelody', generateCountermelodyForSong(window.currentSong, { getChordNotes, NOTE_NAMES, normalizeSectionName, getRandomElement, getPitchFromSymbol, getChordRootAndType, getDiatonicChords }, sectionCache)));
+        addListener('generateTextureButton', () => addTrackToMidiData('Texture', generateTextureForSong(window.currentSong, { getChordNotes, NOTE_NAMES, normalizeSectionName, getRandomElement, getChordRootAndType }, sectionCache)));
+        addListener('generateOrnamentButton', () => addTrackToMidiData('Ornament', generateOrnamentForSong(window.currentSong, { getChordNotes, NOTE_NAMES, normalizeSectionName, getRandomElement, getPitchFromSymbol, getChordRootAndType, getDiatonicChords }, sectionCache)));
+        addListener('generateMiasmaticButton', () => addTrackToMidiData('Miasmatic', generateMiasmaticForSong(window.currentSong, { getChordNotes, NOTE_NAMES, normalizeSectionName, getRandomElement, getPitchFromSymbol, getChordRootAndType, getDiatonicChords }, sectionCache)));
+        addListener('generateDronesButton', () => addTrackToMidiData('Drones', generateDronesForSong(window.currentSong, { getChordNotes, NOTE_NAMES, normalizeSectionName, getRandomElement, getPitchFromSymbol, getChordRootAndType, getDiatonicChords }, sectionCache)));
+        addListener('generatePercussionButton', () => addTrackToMidiData('Percussion', generatePercussionForSong(window.currentSong, { getChordNotes, NOTE_NAMES, normalizeSectionName, getRandomElement, getPitchFromSymbol, getChordRootAndType, getDiatonicChords }, sectionCache)));
+        addListener('generateGlitchFxButton', () => addTrackToMidiData('GlitchFx', generateGlitchFxForSong(window.currentSong, { getChordNotes, NOTE_NAMES, normalizeSectionName, getRandomElement }, sectionCache)));
     };
 });
 
