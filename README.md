@@ -50,6 +50,20 @@ No song data in other globals.
 
 **What is NOT pending:**
 Nothing. The refactor is complete.
+
+## Musical quality
+
+Three improvements applied after the S3 refactor:
+
+**1 — Micro-timing humanization (`humanizeTiming`)**  
+A new `humanizeTiming(startTick, strength)` helper in `lib/theory-helpers.js` shifts each note's `startTick` by a small random deviation (±strength ticks, floor, clamped ≥ 0). Applied to: Melody (strength 6), Vocal (strength 5), Bass generative mode (strength 3), Countermelody (strength 7), Pad (strength 8). Drums and Percussion are excluded.
+
+**2 — Octave separation (`GENERATOR_OCTAVE_RANGES` + `clampToRange`)**  
+`GENERATOR_OCTAVE_RANGES` const added to `lib/config-music-data.js` assigns a MIDI pitch range to each generator layer (Bass E1–B2, Pad C3–E4, Melody C4–G5, Vocal A3–E5, Countermelody G4–B5, Texture C5–G#5, Drones C2–E3, Ornament E4–G#5, Miasmatic G3–A#4, Arpeggio E3–E5, GlitchFx C3–C6). `clampToRange(pitch, min, max)` in `lib/theory-helpers.js` transposes by ±12 until in range (preserving pitch class). Applied to all generators except Drums/Percussion. Bass also replaces the old `BASS_PARAMS.PITCH_RANGE` clamp.
+
+**3 — Melodic interval constraint + directional tendency (`gen/melody-generator.js` only)**  
+*3a — Interval gate:* After a candidate pitch is selected, if the interval from the previous note exceeds 7 semitones it is rejected (unless it is the first note of the section or the previous note was held longer than 2 beats). Fallback: nearest scale note within 7 semitones.  
+*3b — Directional tendency:* Each section starts with a `melodicDirection` (+1 / −1): Verse 60 % ascending, Bridge 60 % descending, Chorus / other 50 / 50. Step-motion candidates moving in the current direction are weighted 2×. After 4 consecutive notes in the same direction the direction flips, preventing monotonous runs.
 **Algorithmic music generator — web-based, client-side, no build step.**  
 Generates complete song structures with chords, melody, bass, drums and additional layers, exported as multi-track MIDI files. In-browser audio preview via Tone.js.
 
