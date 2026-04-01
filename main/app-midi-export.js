@@ -251,7 +251,7 @@ function handleGenerateMelody() {
     const melodyBtn = document.getElementById('generateMelodyButton');
     if(melodyBtn) { melodyBtn.disabled = true; melodyBtn.textContent = "Creating Melody...";}
     try {
-        const generatedMelody = generateMelodyForSong(window.currentSong, window.currentSong.mainScaleNotes, window.currentSong.mainScaleRoot, CHORD_LIB, scales, NOTE_NAMES, allNotesWithFlats, getChordNotes, getNoteName, getRandomElement, getChordRootAndType, sectionCache);
+        const generatedMelody = generateMelodyForSong(window.currentSong, window.currentSong.mainScaleNotes, window.currentSong.mainScaleRoot, CHORD_LIB, scales, NOTE_NAMES, allNotesWithFlats, getChordNotes, getNoteName, getRandomElement, getChordRootAndType, window.currentSong.sectionCache);
         if (generatedMelody && generatedMelody.length > 0) {
             if (window.currentSong && typeof normalizeToMidiTrack === 'function') {
                 const _im = (typeof INSTRUMENT_MAP !== 'undefined' && INSTRUMENT_MAP['Melody']) || { channel: 2, program: 80 };
@@ -277,7 +277,7 @@ function handleGenerateVocalLine() {
     if (vocalBtn) { vocalBtn.disabled = true; vocalBtn.textContent = "Creating Vocal Line..."; }
     try {
         const options = { globalRandomActivationProbability: 0.6 };
-        const vocalLine = generateVocalLineForSong(window.currentSong, window.currentSong.mainScaleNotes, window.currentSong.mainScaleRoot, CHORD_LIB, scales, NOTE_NAMES, allNotesWithFlats, getChordNotes, getNoteName, getRandomElement, getChordRootAndType, options, sectionCache);
+        const vocalLine = generateVocalLineForSong(window.currentSong, window.currentSong.mainScaleNotes, window.currentSong.mainScaleRoot, CHORD_LIB, scales, NOTE_NAMES, allNotesWithFlats, getChordNotes, getNoteName, getRandomElement, getChordRootAndType, options, window.currentSong.sectionCache);
         if (vocalLine && vocalLine.length > 0) {
             if (window.currentSong && typeof normalizeToMidiTrack === 'function') {
                 const _im = (typeof INSTRUMENT_MAP !== 'undefined' && INSTRUMENT_MAP['Vocal']) || { channel: 3, program: 54 };
@@ -313,7 +313,7 @@ function handleGenerateBassLine() {
         const helpers = { getChordRootAndType, getChordNotes, getScaleNotes, getRandomElement, getDiatonicChords, NOTE_NAMES };
         const bassModeRaw = document.getElementById('bassMode')?.value || 'pattern';
         const bassMode = bassModeRaw === 'random' ? (['pattern','walking','generative'])[Math.floor(Math.random()*3)] : bassModeRaw;
-        const bassLine = generateBassLineForSong(window.currentSong, helpers, sectionCache, bassMode);
+        const bassLine = generateBassLineForSong(window.currentSong, helpers, window.currentSong.sectionCache, bassMode);
         if (bassLine && bassLine.length > 0) {
             if (window.currentSong && typeof normalizeToMidiTrack === 'function') {
                 const _im = (typeof INSTRUMENT_MAP !== 'undefined' && INSTRUMENT_MAP['Bass']) || { channel: 4, program: 33 };
@@ -340,7 +340,7 @@ function handleGenerateDrumTrack() {
 
     try {
         const drumTrackOptions = { globalRandomActivationProbability: 0.6, fillFrequency: 0.25 };
-        const drumEvents = generateDrumTrackForSong(window.currentSong, window.currentSong.bpm, null, window.currentSong.sections, CHORD_LIB, NOTE_NAMES, getRandomElement, drumTrackOptions, sectionCache);
+        const drumEvents = generateDrumTrackForSong(window.currentSong, window.currentSong.bpm, null, window.currentSong.sections, CHORD_LIB, NOTE_NAMES, getRandomElement, drumTrackOptions, window.currentSong.sectionCache);
         if (drumEvents && drumEvents.length > 0) {
             if (window.currentSong && typeof normalizeToMidiTrack === 'function') {
                 const _im = (typeof INSTRUMENT_MAP !== 'undefined' && INSTRUMENT_MAP['Drums']) || { channel: 10, program: 0 };

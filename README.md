@@ -38,14 +38,17 @@ No song data in other globals.
 - `app-song-generation.js`: `currentMidiData` inside `generateSongArchitecture()` replaced by local variable `songData`; `midiSectionTitleElement` guard lines removed; `renderSongOutput()` now passed `currentSong` directly; superfluous pre-warm call to `buildSongDataForTextFile()` removed.
 - `app-midi-export.js`: `buildSongDataForTextFile()` now returns its value instead of writing to a global; `handleSaveSong()` uses the return value via a local variable.
 
+**Post-S3 fixes:**
+- `sectionCache` implicit global resolved: `sectionCache: {}` field added to `createSongDocument()`; bare `sectionCache = {}` reset removed from `app-song-generation.js`; all call sites in `app-midi-export.js` and `app-setup.js` now pass `window.currentSong.sectionCache`. Generator functions in `gen/` receive it as a parameter (unchanged — correct behavior).
+- Tone.js / html2canvas / jsPDF CDN script tags moved before `app-setup.js` in `index.html`. Final order: all local lib+gen+main scripts → CDN scripts → `app-setup.js` → `app-audio-playback.js`.
+
 **Globals that remain (intentional — not song data):**
 - `glossaryChordData` / `window.glossaryChordData`: UI state for chord glossary navigation; rebuilt on every render.
 - `CHORD_LIB`: chord library built from config at startup; shared across all modules.
-- `sectionCache`: implicit global (no declaration) in `app-song-generation.js`; per-instrument section cache reset on each generation. Sub-keys: melody, bass, drums, vocal, countermelody, texture, drones, ornament, miasmatic, percussion, glitch. Intentionally not wired to SongDocument caches (would require changing generator function signatures).
 - `currentSong` (module-level `let` in `app-song-generation.js`): local reference used only within that file; `window.currentSong` is the canonical external reference.
 - `_overrideTitle` (`window._overrideTitle`): title override for "regenerate from title"; consumed once then nulled.
 
-**What is NOT pending (S3 is the final session):**
+**What is NOT pending:**
 Nothing. The refactor is complete.
 **Algorithmic music generator — web-based, client-side, no build step.**  
 Generates complete song structures with chords, melody, bass, drums and additional layers, exported as multi-track MIDI files. In-browser audio preview via Tone.js.
