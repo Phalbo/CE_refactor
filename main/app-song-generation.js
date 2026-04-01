@@ -242,6 +242,9 @@ function generateChordsForSection(
 }
 
 
+// Current song being assembled — replaced on every generation run.
+let currentSong = null;
+
 /**
  * Funzione principale per generare l'architettura della canzone.
  * Modificata per includere la fase di "Arrangiamento Ritmico-Armonico"
@@ -256,6 +259,8 @@ async function generateSongArchitecture() {
     currentSongDataForSave = null; currentMidiData = {};
     glossaryChordData = {};
     sectionCache = {};
+    currentSong = createSongDocument();
+    currentSong.generatedAt = new Date().toISOString();
 
     if (midiSectionTitleElement) midiSectionTitleElement.style.display = 'none';
     const actionButtonIDs = [
@@ -358,7 +363,9 @@ async function generateSongArchitecture() {
 
         const allGeneratedChordsSet = new Set();
         let totalSongMeasures = 0;
-        const progressionCache = {};
+        // progressionCache lives on currentSong so it persists on the document object.
+        // Local alias keeps all existing call sites unchanged.
+        const progressionCache = currentSong.progressionCache;
         let currentGlobalTickForTS = 0;
         const rawMidiSectionsData = [];
 
@@ -530,6 +537,25 @@ async function generateSongArchitecture() {
                 section.scaleNotes = [];
             }
         });
+
+        // --- Populate SongDocument fields and unify currentMidiData with currentSong ---
+        // Copy every property built onto currentMidiData onto the SongDocument so that
+        // all existing consumers (app-ui-render, app-audio-playback, generators) that
+        // still reference currentMidiData automatically get the SongDocument object.
+        Object.assign(currentSong, currentMidiData);
+        // SongDocument-specific names (different from the legacy currentMidiData names):
+        currentSong.seed          = songSeed;
+        currentSong.keyRoot        = selectedKey.root;
+        currentSong.mode           = selectedKey.mode;
+        currentSong.mood           = mood;
+        currentSong.structureName  = selectedStructureTemplate;
+        currentSong.styleNotes     = styleNote;
+        currentSong.timeSignature  = timeSignatureChanges[0]?.ts || [4, 4];
+        currentSong.allGeneratedChords = allGeneratedChordsSet;
+        // From here on, currentMidiData and currentSong are the same object.
+        currentMidiData = currentSong;
+        window.currentSong = currentSong;
+        // --- End SongDocument population ---
 
         if (typeof renderSongOutput === "function") {
             renderSongOutput(currentMidiData, allGeneratedChordsSet, styleNote, mainScaleText, mainScaleParsedNotes, mainScaleParsedRoot, mainScaleParsedName);
