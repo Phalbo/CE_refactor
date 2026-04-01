@@ -64,7 +64,7 @@ function generateMiasmaticForSong(songData, helpers, sectionCache) {
                         sectionTrack.push({
                             pitch: [pitch],
                             duration: `T${Math.round(durationInTicks)}`,
-                            startTick: humanizeTiming(slot.effectiveStartTickInSection + currentTickInSlot, 6),
+                            startTick: humanizeTiming(slot.effectiveStartTickInSection + currentTickInSlot, 3),
                             velocity: 80 + Math.floor(Math.random() * 20)
                         });
                     }

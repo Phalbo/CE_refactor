@@ -45,7 +45,7 @@ function generateCountermelodyForSong(songData, helpers, sectionCache) {
                     sectionTrack.push({
                         pitch: [counterPitch],
                         duration: `T${ticksPerBeat}`, // Eighth note
-                        startTick: humanizeTiming(slot.effectiveStartTickInSection + currentTickInSlot, 7),
+                        startTick: humanizeTiming(slot.effectiveStartTickInSection + currentTickInSlot, 3),
                         velocity: 70
                     });
                     lastCounterPitch = counterPitch;
