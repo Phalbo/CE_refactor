@@ -82,7 +82,11 @@ Module-level counters `_arpeggioConsecutiveSilences` and `_arpeggioLastSectionTy
 
 ## Harmonic Rhythm Refactor
 
-Status: Step 2 complete — Step 3 pending
+Harmonic rhythm refactor: COMPLETE
+
+Passing chords active in verse/chorus/bridge/outro via PASSING_CHORD_RULES. Rhythm patterns from SECTION_HARMONIC_RHYTHM_PATTERNS now drive chord slot durations.
+
+**Step 3** adds a `<span class="passing-badge">p</span>` superscript badge next to passing chord names in the section timeline cards (`app-ui-render.js`). The badge appears both in the text chord list and in the proportional chord segment bars. CSS rule `.passing-badge` added to `style/components.css`.
 
 **Step 2** added `getDegreeFromChordName` and `resolvePassingChords` functions in `main/app-song-generation.js`. After all `mainChordSlots` are built, a second pass iterates every slot flagged `isPassingChord: true`, matches the surrounding chord pair against `PASSING_CHORD_RULES` (in `lib/passing-chords-config.js`) using probability-weighted rule firing, and writes the resolved chord name back to the slot. Fallback: dominant-7th a semitone below the target chord root. Resolved chords are added to `allGeneratedChordsSet`.
 

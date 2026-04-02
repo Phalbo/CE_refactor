@@ -353,6 +353,14 @@ button#generateButton:disabled {
   margin-bottom: var(--space-xs);
 }
 
+.passing-badge {
+  font-size: 0.6em;
+  vertical-align: super;
+  opacity: 0.6;
+  color: var(--accent);
+  margin-left: 2px;
+}
+
 .timeline-section-card .section-bar-grid {
   display: flex;
   position: absolute;
