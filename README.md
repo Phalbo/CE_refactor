@@ -1,4 +1,26 @@
 # CapricEngine v5.3
+
+
+## Harmonic rhythm refactor — in progress
+
+**Status: Step 1 pending**
+
+Wiring SECTION_HARMONIC_RHYTHM_PATTERNS and PASSING_CHORD_RULES 
+into the mainChordSlots building logic. Both files were loaded 
+but never used.
+
+Three steps:
+- S1: rhythm-aware slot building (replaces equal distribution)
+- S2: PASSING slots resolved via PASSING_CHORD_RULES
+- S3: passing chords added to glossary and UI
+
+Critical file: main/app-song-generation.js
+Block to modify: "FASE DI CREAZIONE DEI mainChordSlots"
+Do not touch: gen/, app-midi-export.js, style/
+
+
+
+
 ## Refactor status
 
 **S1 — Complete**
