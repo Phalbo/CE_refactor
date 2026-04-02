@@ -80,6 +80,12 @@ Module-level counters `_arpeggioConsecutiveSilences` and `_arpeggioLastSectionTy
 - `trap_hihats_44` (weight 8, 32-grid): 16th-note hi-hat grid with open bursts on off-16th positions, syncopated kick. Moods: ansioso, arrabbiato.  
 - `bossa_nova_44` (weight 7): Cross-stick on 3/9/14, ride on all 8ths, foot hi-hat on 2 and 4, kick on 1/6/10. Ride bell variation (25 %). Moods: etereo, malinconico, very_normal_person.
 
+**8 — Four targeted fixes**  
+Fixed: chordIndex bug causing chord repetition in verses — `chordIndex` now advances once per bar only; `NEXT_FROM_CHOSEN_PATTERN` offsets are bar-local and do not permanently advance the index.  
+Rhythm patterns now cached per section type (`rhythmPatternCache` on SongDocument) — repeated sections (Verse 1, Verse 2) use identical chord slot layouts.  
+Intro/Outro use simple tonic progressions only — drawn from a restricted set of I/V/IV patterns, bypassing the POP_PATTERNS library used by verse/chorus/bridge.  
+Melody and Vocal separated into distinct octave registers: Melody E4–A5 (`min: 64, max: 81`), Vocal E3–G4 (`min: 52, max: 67`); the two lines no longer occupy the same octave.
+
 ## Harmonic Rhythm Refactor
 
 Harmonic rhythm refactor: COMPLETE
