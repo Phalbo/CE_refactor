@@ -1,388 +1,212 @@
 # CapricEngine v5.3
 
+Algorithmic music generator — web-based, client-side, no build step.
+Generates song structures with chords, melody, bass, drums and layers, exported as multi-track MIDI.
 
-## Harmonic rhythm refactor complete
-
-
-Wiring SECTION_HARMONIC_RHYTHM_PATTERNS and PASSING_CHORD_RULES 
-into the mainChordSlots building logic. Both files were loaded 
-but never used.
-
-Three steps:
-- S1: rhythm-aware slot building (replaces equal distribution)
-- S2: PASSING slots resolved via PASSING_CHORD_RULES
-- S3: passing chords added to glossary and UI
-
-Critical file: main/app-song-generation.js
-Block to modify: "FASE DI CREAZIONE DEI mainChordSlots"
-Do not touch: gen/, app-midi-export.js, style/
-
-
-
-
-## Refactor status
-
-**S1 — Complete**
-- `lib/song-document.js` created: global state audit + `createSongDocument()` factory + MidiTrack/NoteEvent typedefs
-- `index.html`: `lib/song-document.js` added as first script tag
-- Globals identified in audit (not yet removed — pending S2/S3): `currentSongDataForSave`, `currentMidiData`, `mainChordSlots`, `progressionCache`, and all generator output caches
-
-**S2 — Complete**
-- `app-song-generation.js`: SongDocument initialized on every run, `progressionCache` aliased onto it, all legacy fields copied via `Object.assign`, `currentMidiData = currentSong` for backward compat.
-- `lib/theory-helpers.js`: `normalizeToMidiTrack()` added.
-- `main/app-midi-export.js`, `main/app-setup.js`, `gen/generatePadForTheSong.js`: all generators write to `window.currentSong.tracks[key]`. `app-midi-export.js` reads from `window.currentSong` throughout.
-
-**S3 — Complete**
-
-SongDocument refactor complete (v5.2).
-Single source of truth: `window.currentSong` (`createSongDocument()`).
-All generators write to `window.currentSong.tracks`.
-All renderers, MIDI export, audio preview, and PDF read from `window.currentSong`.
-No song data in other globals.
-
-**Refactor S3 change log (commits S3a–S3d):**
-
-*S3a — app-ui-render.js reads from SongDocument:*
-- `updateEstimatedSongDuration()`: `currentMidiData` → `window.currentSong`.
-- `renderSongOutput()` was already receiving `songData` as a parameter (unchanged).
-
-*S3b — audio preview reads from SongDocument:*
-- `app-audio-playback.js` `playPreview()`: guard check, BPM, and `sections` passed to `scheduleFromChordSlots()` all changed from `currentMidiData` to `window.currentSong`.
-
-*S3c — PDF export and pad generator read from SongDocument:*
-- `gen/generatePadForTheSong.js`: guard + destructure changed from `currentMidiData` to `window.currentSong`.
-- `app-midi-export.js` `handleSavePDF()` was already migrated in S2c (no change).
-
-*S3d — global cleanup, old song globals removed:*
-- **Removed globals** (were declared in `app-setup.js`): `currentMidiData`, `currentSongDataForSave`, `midiSectionTitleElement`.
-- `app-setup.js`: generator call arguments (Countermelody, Texture, Ornament, Miasmatic, Drones, Percussion, GlitchFx) updated from `currentMidiData` to `window.currentSong`.
-- `app-song-generation.js`: `currentMidiData` inside `generateSongArchitecture()` replaced by local variable `songData`; `midiSectionTitleElement` guard lines removed; `renderSongOutput()` now passed `currentSong` directly; superfluous pre-warm call to `buildSongDataForTextFile()` removed.
-- `app-midi-export.js`: `buildSongDataForTextFile()` now returns its value instead of writing to a global; `handleSaveSong()` uses the return value via a local variable.
-
-**Post-S3 fixes:**
-- `sectionCache` implicit global resolved: `sectionCache: {}` field added to `createSongDocument()`; bare `sectionCache = {}` reset removed from `app-song-generation.js`; all call sites in `app-midi-export.js` and `app-setup.js` now pass `window.currentSong.sectionCache`. Generator functions in `gen/` receive it as a parameter (unchanged — correct behavior).
-- Tone.js / html2canvas / jsPDF CDN script tags moved before `app-setup.js` in `index.html`. Final order: all local lib+gen+main scripts → CDN scripts → `app-setup.js` → `app-audio-playback.js`.
-
-**Globals that remain (intentional — not song data):**
-- `glossaryChordData` / `window.glossaryChordData`: UI state for chord glossary navigation; rebuilt on every render.
-- `CHORD_LIB`: chord library built from config at startup; shared across all modules.
-- `currentSong` (module-level `let` in `app-song-generation.js`): local reference used only within that file; `window.currentSong` is the canonical external reference.
-- `_overrideTitle` (`window._overrideTitle`): title override for "regenerate from title"; consumed once then nulled.
-
-**What is NOT pending:**
-Nothing. The refactor is complete.
-
-## Musical quality
-
-Three improvements applied after the S3 refactor:
-
-**1 — Micro-timing humanization (`humanizeTiming`)**  
-A new `humanizeTiming(startTick, strength)` helper in `lib/theory-helpers.js` shifts each note's `startTick` by a small random deviation (±strength ticks, floor, clamped ≥ 0). Applied to: Melody (strength 6), Vocal (strength 5), Bass generative mode (strength 3), Countermelody (strength 7), Pad (strength 8). Drums and Percussion are excluded.
-
-**2 — Octave separation (`GENERATOR_OCTAVE_RANGES` + `clampToRange`)**  
-`GENERATOR_OCTAVE_RANGES` const added to `lib/config-music-data.js` assigns a MIDI pitch range to each generator layer (Bass E1–B2, Pad C3–E4, Melody C4–G5, Vocal A3–E5, Countermelody G4–B5, Texture C5–G#5, Drones C2–E3, Ornament E4–G#5, Miasmatic G3–A#4, Arpeggio E3–E5, GlitchFx C3–C6). `clampToRange(pitch, min, max)` in `lib/theory-helpers.js` transposes by ±12 until in range (preserving pitch class). Applied to all generators except Drums/Percussion. Bass also replaces the old `BASS_PARAMS.PITCH_RANGE` clamp.
-
-**3 — Melodic interval constraint + directional tendency (`gen/melody-generator.js` only)**  
-*3a — Interval gate:* After a candidate pitch is selected, if the interval from the previous note exceeds 7 semitones it is rejected (unless it is the first note of the section or the previous note was held longer than 2 beats). Fallback: nearest scale note within 7 semitones.  
-*3b — Directional tendency:* Each section starts with a `melodicDirection` (+1 / −1): Verse 60 % ascending, Bridge 60 % descending, Chorus / other 50 / 50. Step-motion candidates moving in the current direction are weighted 2×. After 4 consecutive notes in the same direction the direction flips, preventing monotonous runs.
-
-**4 — Micro-timing humanization extended to remaining generators**  
-`humanizeTiming` now applied to all non-drum generators: Texture (strength 8), Drones (strength 4), Ornament (strength 3, base tick humanized once and shared between grace note and main note), Miasmatic (strength 6), Arpeggiator (strength 4). Combined with previous session, every melodic/harmonic generator except Drums and Percussion uses humanizeTiming.
-
-**5 — Drum intro/outro progressive entry and outro fade (`gen/generateDrumTrackForSong.js`)**  
-Intro sections: bars in the first third have kick only; bars in the middle third add snare and cross-stick; final third uses the full kit. Outro sections: reverse — full kit in first third, kick+snare in middle, kick only at the end. Additionally, outro velocity fades linearly to 50 % of original over the section length. Intro and outro sections are excluded from `sectionCache.drums` (never cached/replayed) since bar-relative progress is required for the progressive entry logic.
-
-**6 — Arpeggiator phrase-level rests (`lib/arpeggiator.js`)**  
-Module-level counters `_arpeggioConsecutiveSilences` and `_arpeggioLastSectionType` added. At the start of each chord slot, a silence roll decides whether the entire slot is skipped (returns empty). Silence probability: Verse 25 %, Bridge 40 %, Intro 30 %, Outro 50 %, other 10 %. To avoid complete silence, no more than 2 consecutive slots are ever silenced (counter resets at section type change).
-
-**7 — New drum patterns (4 patterns in `lib/drum-patterns-library.js`)**  
-- `reggae_one_drop_44` (weight 9): Kick and snare both on beat 3 only (classic one-drop), open hi-hat on off-beats 2.5 and 4.5. Moods: malinconico, etereo, very_normal_person.  
-- `halftime_hiphop_44` (weight 10, isShuffle): Kick on beats 1 and 10, snare on beat 3 (half-time feel). Ghost snare variation (35 %) and extra syncopated kick (20 %). Moods: ansioso, arrabbiato, very_normal_person.  
-- `trap_hihats_44` (weight 8, 32-grid): 16th-note hi-hat grid with open bursts on off-16th positions, syncopated kick. Moods: ansioso, arrabbiato.  
-- `bossa_nova_44` (weight 7): Cross-stick on 3/9/14, ride on all 8ths, foot hi-hat on 2 and 4, kick on 1/6/10. Ride bell variation (25 %). Moods: etereo, malinconico, very_normal_person.
-
-**8 — Four targeted fixes**  
-Fixed: chordIndex bug causing chord repetition in verses — `chordIndex` now advances once per bar only; `NEXT_FROM_CHOSEN_PATTERN` offsets are bar-local and do not permanently advance the index.  
-Rhythm patterns now cached per section type (`rhythmPatternCache` on SongDocument) — repeated sections (Verse 1, Verse 2) use identical chord slot layouts.  
-Intro/Outro use simple tonic progressions only — drawn from a restricted set of I/V/IV patterns, bypassing the POP_PATTERNS library used by verse/chorus/bridge.  
-Melody and Vocal separated into distinct octave registers: Melody E4–A5 (`min: 64, max: 81`), Vocal E3–G4 (`min: 52, max: 67`); the two lines no longer occupy the same octave.
-
-## Harmonic Rhythm Refactor
-
-Harmonic rhythm refactor: COMPLETE
-
-Passing chords active in verse/chorus/bridge/outro via PASSING_CHORD_RULES. Rhythm patterns from SECTION_HARMONIC_RHYTHM_PATTERNS now drive chord slot durations.
-
-**Step 3** adds a `<span class="passing-badge">p</span>` superscript badge next to passing chord names in the section timeline cards (`app-ui-render.js`). The badge appears both in the text chord list and in the proportional chord segment bars. CSS rule `.passing-badge` added to `style/components.css`.
-
-**Step 2** added `getDegreeFromChordName` and `resolvePassingChords` functions in `main/app-song-generation.js`. After all `mainChordSlots` are built, a second pass iterates every slot flagged `isPassingChord: true`, matches the surrounding chord pair against `PASSING_CHORD_RULES` (in `lib/passing-chords-config.js`) using probability-weighted rule firing, and writes the resolved chord name back to the slot. Fallback: dominant-7th a semitone below the target chord root. Resolved chords are added to `allGeneratedChordsSet`.
-
-**Step 1** replaced the equal-distribution `mainChordSlots` building loop in `main/app-song-generation.js` with a rhythm-aware version driven by `SECTION_HARMONIC_RHYTHM_PATTERNS` (in `lib/harmonic-patterns-config.js`). Chord durations within each section are now drawn from weighted random patterns (e.g. `OneChordPerBar`, `SplitBar`, `Syncopated`, `QuickChange`) keyed by time signature and section type. New slot fields `isPassingChord` and `isHit` are set for use in Step 2.
+> Repo: github.com/Phalbo/[repo-name]
 
 ---
 
-## v5.3 — What's new
+## Stack & Rules
 
-**Download Full MIDI (`handleDownloadFullMidi` in `main/app-midi-export.js`)**  
-New "Download Full MIDI" button in the Export group of the action bar. Exports a single MIDI Format 1 file (`[title]_FULL.mid`) containing all currently generated tracks as separate channels. Only includes tracks that have been run (non-null in `window.currentSong.tracks`). Channel 10 (Drums/Percussion) never receives a program change event. Track name, BPM, and time signature changes are written to every MIDI track as required by Format 1. Wired via `addListener('downloadFullMidiButton', handleDownloadFullMidi)` in `app-setup.js`.
-
-**Header redesign**  
-Logo (`CapricEngine_LogoW.svg`) centered, slightly enlarged (80 px → 90 px, +12.5 %). Redundant text wordmark removed — the SVG already contains the logotype. Version badge retained.
-
-**Algorithmic music generator — web-based, client-side, no build step.**  
-Generates complete song structures with chords, melody, bass, drums and additional layers, exported as multi-track MIDI files. In-browser audio preview via Tone.js.
-
-> Repository: github.com/Phalbo/[repo-name]  
-> Versioning starts at v5.2 — all prior versions are historical reference only.
-
----
-
-## v5.2 — What's new
-
-- Full UI redesign: dark-mode, WCAG AA palette, compact header, DM Serif Display + Inter fonts
-- Title-derived seed system: same title → same song, always. Song ID displayed and copyable.
-- "Regenerate from title" input: paste a previous title to reproduce an exact song
-- PDF rebuilt from scratch: white background, programmatic layout, section-grouped chords, no dark UI screenshots
-- Chord glossary: grouped by song section, randomized voicing (seeded), pure-CSS hover tooltips
-- Energy arc: per-section `energyLevel` (0.0–1.0) controls density, velocity, drum kit entry/exit
-- Section coherence: melody contour, vocal rhythm, drum patterns reused across repeated sections
-- Arpeggiator musicality: per-section rules (intro builds in, outro fades out, verse breathes)
-- Bass mode: Pattern / Walking / Generative / Random
-- Audio preview: Play/Stop fixed (Tone.js Transport properly reset), limited to 5 generators (Pad · Melody · Bass · Drums · Vocals)
-- Visual dot indicators on generator buttons: grey = not run, green = active in preview
-- Multilingual title generator: IT/FR/DE word pools, 15% chance of two-line subtitle
-- Bug fixes: bass tick gaps, vocal infinite silences, arpeggiator rest truncation, modal interchange silent errors
-- Renamed labels: "Bass" (was Deekonizer), "Vocals" (was Vocal Shame Machine), "Mega Pop Hit" (was Very Normal Person)
-- Scale degree display: note names + 1 2 3 4 5 6 7 below scale name
-- Per-section MIDI export buttons inside each section card
-- Chord hover tooltip: quality name, intervals, function in key
+- Vanilla JS + HTML + CSS. One PHP endpoint: `get_chord_data.php`.
+- **No npm, no build step.** All JS via `<script>` tags in `index.html` — order matters.
+- **Never touch `app-midi-export.js` core logic.** New tracks use `addTrackToMidiData()`.
+- **Never use bare `Math.random()`** — use `mulberry32` seeded PRNG from `theory-helpers.js`.
+- **Never modify `mainChordSlots` shape** (see contract below).
+- CSS only in `style/`. Italian comments preserved. New comments in English.
+- Commit format: `[CE5.3] description`
+- Every commit must leave the app working.
 
 ---
 
 ## Architecture
 
-Fully static app: HTML + CSS + vanilla JS. One PHP endpoint (`get_chord_data.php`) for chord voicing lookups. No npm, no build step, no framework. All JS loaded via `<script>` tags in `index.html` in strict dependency order.
+```
+index.html → lib/ → gen/ → main/ → style/
+```
 
-SongDocument refactor complete (S1+S2+S3). Single source of truth: `window.currentSong`. All generators, renderers, MIDI export, audio preview, and PDF read from and write to `window.currentSong`.
+**Single source of truth: `window.currentSong`** (created by `createSongDocument()` in `lib/song-document.js`).
+All generators write to `window.currentSong.tracks[name]`.
+All renderers, MIDI export, PDF, and audio preview read from `window.currentSong`.
 
-**Refactor S1 change log (commit `[CE5.2] Refactor S1`):**
-- **New file**: `lib/song-document.js` — global state audit comment block, `createSongDocument()` factory, MidiTrack/NoteEvent JSDoc typedefs.
-- **Modified**: `index.html` — `<script src="lib/song-document.js">` added as first script tag.
-
-**Refactor S2 change log (commits S2a / S2b / S2c):**
-
-*S2a — SongDocument wired into app-song-generation.js:*
-- `main/app-song-generation.js`: added `let currentSong = null;` at module level.
-- At start of each `generateSongArchitecture()` call: `currentSong = createSongDocument()` + `generatedAt`.
-- `const progressionCache = {}` replaced by `const progressionCache = currentSong.progressionCache` (alias — all writes go directly into the SongDocument).
-- After all `currentMidiData` fields are populated: `Object.assign(currentSong, currentMidiData)` copies every field; SongDocument-specific fields (`seed`, `keyRoot`, `mode`, `mood`, `structureName`, `styleNotes`, `timeSignature`, `allGeneratedChords`) set on top; then `currentMidiData = currentSong; window.currentSong = currentSong` (same object from this point).
-
-*S2b — generator outputs normalized to MidiTrack:*
-- `lib/theory-helpers.js`: added `normalizeToMidiTrack(name, channel, program, rawNotes)`. Handles MidiWriter `"T{n}"` duration strings; tries `pitch/note/midiNote`, `startTick/tick/start`, `durationTicks/duration` property-name variants.
-- `main/app-midi-export.js`: after each generator produces output, writes to `window.currentSong.tracks[key]` using `normalizeToMidiTrack`. Handlers wired: `handleGenerateMelody → tracks.melody`, `handleGenerateVocalLine → tracks.vocals`, `handleGenerateBassLine → tracks.bass`, `handleGenerateDrumTrack → tracks.drums`, `handleGenerateChordRhythm → tracks.arpeggio`, `handleGenerateSingleTrackChordMidi → tracks.pad`.
-- `gen/generatePadForTheSong.js`: same track write for `handleGeneratePad` (the button-wired pad handler).
-- `main/app-setup.js`: `addTrackToMidiData()` writes to `window.currentSong.tracks[trackKey]` for all extra generators (Countermelody, Texture, Ornament, Miasmatic, Drones, Percussion, GlitchFx).
-
-*S2c — app-midi-export reads from SongDocument:*
-- `main/app-midi-export.js`: all `currentMidiData` references replaced by `window.currentSong`. Pure semantic rename — zero behaviour change (same object after S2a).
-- `main/app-setup.js`: `addTrackToMidiData()` guard + filename/bpm reads updated to `window.currentSong`.
-
-**What was NOT changed in S2 (intentional):**
-- `main/app-ui-render.js` — still reads `currentMidiData` directly (same object; wiring pending S3).
-- `main/app-audio-playback.js` — still reads `currentMidiData` (same object; wiring pending S3).
-- `main/app-setup.js` generator call arguments (lines 154–160) — still pass `currentMidiData` to gen/ functions as `songData` parameter (same object; no change needed yet).
-- `gen/generatePadForTheSong.js` guard + destructure (lines 2–3) — still reads `currentMidiData` (same object).
-- `sectionCache` implicit global — sub-keys (melody, bass, drums, etc.) not yet mapped to SongDocument cache fields. Pending S3.
-
-**Pending (S3):**
-- Remove the legacy `currentMidiData` variable from `app-setup.js` (replace declaration with `window.currentSong`).
-- Update `app-ui-render.js` and `app-audio-playback.js` to read from `window.currentSong`.
-- Update generator call arguments in `app-setup.js` to pass `window.currentSong`.
-- Map `sectionCache` sub-keys to `currentSong.melodyCache`, `.drumCache`, etc.
-- Validate zero MIDI output change across all generators after cleanup.
-
-### Critical data contract — do not break
-
-**`mainChordSlots`** is the central object produced by `app-song-generation.js` and consumed by every generator and by `app-midi-export.js`. Structure per slot:
-
+### mainChordSlots contract (DO NOT BREAK)
 ```js
 {
-  sectionName: "Chorus 1",        // e.g. "Verse 1", "Bridge"
-  cleanSectionName: "chorus",     // CSS/cache key, no numbers
   chordName: "Cmaj7",
-  chordNotes: [60, 64, 67, 71],   // MIDI note numbers
-  startTick: 0,                   // absolute tick position
-  durationTicks: 512,             // slot duration in ticks
+  effectiveStartTickInSection: 0,   // relative to section start
+  effectiveDurationTicks: 512,
   timeSignature: [4, 4],
-  energyLevel: 0.85               // 0.0–1.0, used by all generators
+  sectionStartTick: 0,              // absolute
+  isPassingChord: false,
+  isHit: false,
+  energyLevel: 0.85                 // 0.0–1.0
 }
 ```
-
-**`app-midi-export.js` core logic must not be modified.** All new tracks use `addTrackToMidiData()`.
+`TICKS_PER_QUARTER_NOTE_REFERENCE = 128` (global, from `config-music-data.js`).
 
 ### File map
-
 ```
-index.html                        # Entry point, all <script> tags in dependency order
-
 lib/
-  config-music-data.js            # TICKS_PER_QUARTER_NOTE_REFERENCE=128, NOTE_NAMES,
-                                  # INSTRUMENT_MAP, QUALITY_DEFS, scales, MOOD_PROFILES,
-                                  # SONG_STRUCTURE_TEMPLATES, possibleKeysAndModes
-  theory-helpers.js               # getChordRootAndType(), getNotesForChord(),
-                                  # getWeightedRandom(), humanizeVelocity(),
-                                  # hashStringToSeed(), mulberry32() seeded PRNG
-  harmonic-patterns-config.js     # Chord progression patterns per mood/section
-  passing-chords-config.js        # Passing chord rules
-  modal-interchange.js            # getInterchangeChords() — wrapped in try/catch
-  drum-patterns-library.js        # Main drum pattern library (Rock/Pop/Funk/Metal/Electronic)
-  drum-patterns-extra.js          # Additional patterns
-  rhythm-patterns.js / .json      # Rhythmic figures for melody/bass
-  vocal_profiles.js               # Vocal style profiles
-  chord-renderer.js               # SVG chord diagram rendering, fetchChordVoicings()
-  scale-renderer.js               # SVG fretboard + piano keyboard
-  arpeggiator.js                  # Arpeggio pattern library and generator
-  song-structures.json            # Loaded async via loadSongStructures()
-  chance.min.js                   # External: weighted random utility
+  song-document.js          # createSongDocument() factory + global state audit
+  config-music-data.js      # INSTRUMENT_MAP, QUALITY_DEFS, scales, MOOD_PROFILES,
+                            # GENERATOR_OCTAVE_RANGES, SONG_STRUCTURE_TEMPLATES
+  theory-helpers.js         # humanizeVelocity(), humanizeTiming(), clampToRange(),
+                            # hashStringToSeed(), mulberry32(), normalizeToMidiTrack(),
+                            # getWeightedRandom(), getChordRootAndType()
+  harmonic-patterns-config.js  # SECTION_HARMONIC_RHYTHM_PATTERNS — drives chord slot durations
+  passing-chords-config.js     # PASSING_CHORD_RULES — resolved in app-song-generation.js
+  modal-interchange.js         # getInterchangeChords() — try/catch wrapped
+  drum-patterns-library.js     # buildDrumPatternPool(), generateDrumFillEvents(),
+                               # humanizeVelocityLib(), DRUM_MAP_DRUMS_LIB
+  drum-patterns-extra.js       # Extra odd-time patterns
+  rhythm-patterns.js           # RHYTHM_PATTERNS for melody/bass
+  vocal_profiles.js            # VOCAL_STYLE_PROFILES (9 artist profiles)
+  chord-renderer.js            # SVG chord diagrams, fetchChordVoicings()
+  scale-renderer.js            # SVG fretboard + piano keyboard
+  arpeggiator.js               # ARPEGGIO_PATTERNS, RHYTHMIC_VARIATIONS,
+                               # generateChordRhythmEvents()
+  song-structures.json         # loaded async via loadSongStructures()
+  chance.min.js                # weighted random utility
 
 gen/
-  melody-generator.js             # Melody, section-aware rhythm density
-  generateVocalLineForSong.js     # Vocal line, max 2 consecutive pauses
-  generateBassLineForSong.js      # Bass: Pattern / Walking / Generative modes
-  bass-pitch-selector.js          # Bass pitch selection logic
-  generateDrumTrackForSong.js     # Drums, energy arc, section dynamics
-  generatePadForTheSong.js        # Sustained chord pad
-  generateCountermelodyForSong.js # Secondary melodic line (MIDI only, not in preview)
-  generateTextureForSong.js       # Shimmering high-octave pad (MIDI only)
-  generateDronesForSong.js        # Sustained root drone (MIDI only)
-  generateOrnamentForSong.js      # Trills/grace notes, scale-aware (MIDI only)
-  generateMiasmaticForSong.js     # Vocal riff patterns (MIDI only)
-  generatePercussionForSong.js    # Percussion layer ch.10 (MIDI only)
-  generateGlitchFxForSong.js      # Glitch effects (MIDI only)
-  phalbo-title-generator.js       # Dada/surrealist title generator, multilingual
+  melody-generator.js          # Melody; interval constraint ≤8 semitones; directional tendency
+  generateVocalLineForSong.js  # Vocal; max 2 consecutive pauses; 9 artist profiles
+  generateBassLineForSong.js   # Bass: Pattern/Walking/Generative modes
+  bass-pitch-selector.js       # Bass pitch selection
+  generateDrumTrackForSong.js  # Drums; intro/outro progressive entry; energy arc
+  generatePadForTheSong.js     # Sustained chord pad
+  generateCountermelodyForSong.js
+  generateTextureForSong.js
+  generateDronesForSong.js
+  generateOrnamentForSong.js
+  generateMiasmaticForSong.js
+  generatePercussionForSong.js
+  generateGlitchFxForSong.js
+  phalbo-title-generator.js    # Dada titles; "Phalbo" ~65%; IT/FR/DE pools; 15% two-line
 
 main/
-  app-song-generation.js          # Core orchestration: generateSongArchitecture(),
-                                  # generateChordsForSection(), progressionCache,
-                                  # normalizeChordNameToSharps(), getCleanSectionName()
-  app-midi-export.js              # MIDI file creation — do not touch core logic
-                                  # addTrackToMidiData() for new tracks
-  app-ui-render.js                # Song output rendering, chord glossary (section-grouped),
-                                  # scale display, section cards with per-section MIDI buttons
-  app-setup.js                    # Init, dropdown population, attachActionListenersGlobal(),
-                                  # all button event listeners, handleSave*, handleGenerate*
-  app-audio-playback.js           # Tone.js preview: initAudioEngine(),
-                                  # scheduleFromChordSlots(), playPreview(), stopPreview()
-                                  # Connected generators: Pad, Melody, Bass, Drums, Vocals only
+  app-song-generation.js   # generateSongArchitecture(); chord generation;
+                           # mainChordSlots building (rhythm-aware via SECTION_HARMONIC_RHYTHM_PATTERNS);
+                           # resolvePassingChords(); getDegreeFromChordName()
+  app-midi-export.js       # MIDI creation — do not touch core logic
+  app-ui-render.js         # DOM rendering, chord glossary, section cards
+  app-setup.js             # Init, event listeners, attachActionListenersGlobal()
+  app-audio-playback.js    # Tone.js preview (5 generators only: Pad/Melody/Bass/Drums/Vocals)
 
 style/
-  core-layout.css                 # Page structure, grid, header, responsive breakpoints
-  components.css                  # Buttons, cards, badges, chord glossary, section blocks
-  theme-visuals.css               # Colors, fonts, animations, transitions
-                                  # Palette: bg #0F1117, surface #1A1D27, border #2A2D3A,
-                                  # text #F0EEE8, secondary #8A8FA8,
-                                  # accent #7C6AF7, warm #E8A24A
-                                  # Fonts: "DM Serif Display" (logo/title), "Inter" (UI)
+  core-layout.css      # layout, grid, header, breakpoints
+  components.css       # buttons, cards, badges, glossary
+  theme-visuals.css    # colors, fonts, animations
+                       # bg #0F1117, surface #1A1D27, accent #7C6AF7, warm #E8A24A
+                       # Fonts: "DM Serif Display" (logo), "Inter" (UI)
 ```
 
 ---
 
-## Key systems
+## Key Systems
 
-### Seed system (title-derived)
-`phalbo-title-generator.js` generates the song title first. `hashStringToSeed(title)` (djb2) in `theory-helpers.js` derives a numeric seed. `mulberry32(seed)` provides the seeded PRNG used by all generators. Same title = same song always. The seed is displayed as a base-36 Song ID (e.g. "X7K2-39MQ-ALFA") in the UI and in the PDF. **All generation logic must use the seeded PRNG — no bare `Math.random()` in gen/ or main/app-song-generation.js.**
+### Seed
+Title → `hashStringToSeed()` → numeric seed → `mulberry32()` PRNG.
+Same title = same song always. Displayed as base-36 Song ID in UI and PDF.
 
-### Section caching (progressionCache)
-`app-song-generation.js` maintains a `progressionCache` keyed by `cleanSectionName` (e.g. "verse", "chorus"). Repeated sections (Verse 2, Chorus 2) reuse the cached chord progression. All generators extend this pattern for their own output: melody contour, vocal rhythm, drum patterns are cached per clean section name and reused with only micro-variations.
+### Section caching
+`window.currentSong.progressionCache` — keyed by `cleanSectionName` ("verse", "chorus"…).
+Repeated sections reuse chord progressions. `rhythmPatternCache` caches the harmonic rhythm pattern per section type. `sectionCache` on `window.currentSong` holds per-generator section output (melody, bass, drums, vocal, etc.).
+
+### Harmonic rhythm
+`SECTION_HARMONIC_RHYTHM_PATTERNS` drives chord slot durations per section/time-signature.
+Slot degrees: `FROM_CHOSEN_PATTERN`, `NEXT_FROM_CHOSEN_PATTERN`, `PREV_FROM_CHOSEN_PATTERN`, `PASSING`, `HIT`.
+`PASSING` slots are resolved by `resolvePassingChords()` using `PASSING_CHORD_RULES`.
+chordIndex advances once per bar; NEXT_ steps are bar-local offsets only.
 
 ### Energy arc
-Each section in the song structure carries `energyLevel` (0.0–1.0). Intro ramps 0.2→0.7, Verse=0.6, PreChorus=0.75, Chorus=1.0, Bridge=0.5, Outro ramps 0.7→0.2. Generators use energyLevel to gate note density and velocity ceiling. Drum kit: Intro bar 1 = kick only, bar 2 = kick+snare, bar 3 = full kit; Outro reverses.
+Per section: Intro 0.28, Outro 0.22, Verse 0.5, PreChorus 0.65, Chorus 0.9, Bridge 0.5, Solo 0.8.
+Gates note density and velocity ceiling across all generators.
+Drums: Intro = progressive entry (kick only → kick+snare → full kit). Outro = reverse + velocity fade.
 
 ### Humanization
-`humanizeVelocity(base, range, beatPosition)` in `theory-helpers.js`. beatPosition=0 adds +8 accent, beatPosition=0.5 subtracts 5. Returns clamped [20–127]. Used by all generators — no hardcoded velocities in gen/.
+- `humanizeVelocity(base, range, beatPosition)` — all generators, no hardcoded velocities.
+- `humanizeTiming(startTick, strength)` — applied to all melodic generators except drums:
+  Melody 6, Vocal 5, Bass (generative) 3, Countermelody 7, Pad 8, Texture 8, Drones 4, Ornament 3, Miasmatic 6, Arpeggiator 4.
+- `clampToRange(pitch, min, max)` — all generators use `GENERATOR_OCTAVE_RANGES`.
 
-### Audio preview (Tone.js)
-Loaded from CDN: `https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js`. If CDN fails, preview buttons are hidden silently and MIDI export continues normally. Play button must call `Tone.start()` (browser autoplay policy). Stop calls `Tone.Transport.stop()` + `Tone.Transport.cancel()` + position reset. On re-generate, scheduler fully disposed and reinitialized. Only 5 generators connected to preview — do not add more (audio muddiness).
-
-### PDF export
-Uses jsPDF (text/layout) + html2canvas (chord SVG diagrams only, `backgroundColor: '#FFFFFF'` forced). Never screenshots the app UI. Structure: header block (title, key, BPM, mood, Song ID, timestamp) → song structure text → section-grouped chord glossary with captured SVG diagrams. White background throughout. Filename: `[song-title]-CE52.pdf`.
-
-### INSTRUMENT_MAP (lib/config-music-data.js)
-```js
-Pad:           { program: 89,  channel: 1  }
-Melody:        { program: 80,  channel: 2  }
-Vocal:         { program: 54,  channel: 3  }
-Bass:          { program: 33,  channel: 4  }
-Countermelody: { program: 6,   channel: 5  }
-Texture:       { program: 99,  channel: 6  }
-Ornament:      { program: 45,  channel: 7  }
-Miasmatic:     { program: 81,  channel: 8  }
-Drones:        { program: 95,  channel: 9  }
-GlitchFx:     { program: 103, channel: 11 }
-Arpeggio:      { program: 98,  channel: 12 }
-Drums:         { program: 0,   channel: 10 }  // ch.10 always
-Percussion:    { program: 0,   channel: 10 }  // ch.10 always
+### Octave ranges (GENERATOR_OCTAVE_RANGES)
+```
+Bass:          28–47   (E1–B2)
+Drones:        36–52   (C2–E3)
+Pad:           48–64   (C3–E4)
+Arpeggio:      52–76   (E3–E5)
+Vocal:         52–67   (E3–G4)   ← separated from Melody
+Melody:        64–81   (E4–A5)   ← separated from Vocal
+Countermelody: 67–83   (G4–B5)
+Texture:       72–88   (C5–E6)
+Ornament:      64–80   (E4–G#5)
+Miasmatic:     55–74   (G3–D5)
+GlitchFx:      48–84   (C3–C6)
 ```
 
-### Bass modes
-- **Pattern** (default): existing pattern-based generation
-- **Walking**: `generateWalkingLineToNextRoot()` fills last beat of each slot with diatonic/chromatic transition to next root
-- **Generative**: duration probabilities 70%=1beat / 20%=0.5beat / 10%=2beats; notes: root 40% / fifth 25% / third 20% / passing 15%
-- **Random**: one of the three above picked at generation time using song seed
+### INSTRUMENT_MAP
+```
+Pad ch1 · Melody ch2 · Vocal ch3 · Bass ch4 · Countermelody ch5
+Texture ch6 · Ornament ch7 · Miasmatic ch8 · Drones ch9
+Drums ch10 · GlitchFx ch11 · Arpeggio ch12
+```
+All channels currently set to 1 except Drums (10) — DAW template workflow.
 
-### Title generator
-`phalbo-title-generator.js` — Dada/surrealist style. "Phalbo" appears in ~65% of titles. Multilingual pools: IT (notturno, furioso, dolce…), FR (lumière, brume, éclat…), DE (Sehnsucht, Sturm, Nacht…). 60% of titles include at least one non-English word. 15% chance of two-line title with subtitle in a different language.
+### Audio preview
+Tone.js CDN. 5 generators only: Pad, Melody, Bass, Drums, Vocals.
+Do NOT add more — causes audio mud.
+Play: must call `Tone.start()`. Stop: `Tone.Transport.stop()` + `cancel()` + reset.
+
+### PDF
+jsPDF (layout) + html2canvas (chord SVGs only, `backgroundColor:'#FFFFFF'`).
+Never screenshots UI. Filename: `[title]-CE52.pdf`.
+
+---
+
+## Known issues from MIDI analysis (fix pending)
+
+Analyzed `Phalbo Bio-engineered: Atavistic Ballata` (D Ionian, 98 BPM):
+
+- **Pad, Countermelody, Texture, Drones: velocity is flat** (76, 89, 51, 64 fixed).
+  `humanizeVelocity` is not firing correctly in these generators — velocity gets overwritten after the call or the call is missing. Fix: verify each generator actually uses the return value of `humanizeVelocity` for every note event.
+- **Melody off-grid 91%, Vocal 95%** — `humanizeTiming` strength too high for tpb=128.
+  At 128 tpb, strength 6 = ~5% of a beat. Reduce: Melody → 3, Vocal → 2.
+- **Bridge: 6 bars of single chord Bm** — no chord variety. Bridge should use its POP_PATTERNS progressions properly. Check that the `isIntroOutro` guard doesn't accidentally catch bridge sections.
 
 ---
 
 ## UI conventions
 
-- **Section color coding**: Intro #4A7FA5 · Verse #5A9A6E · Chorus #9A5A9A · Bridge #A57A4A · Outro #5A7AA5 · Solo #A55A5A · PreChorus: intermediate between Verse and Chorus
-- **Button groups** (bottom of page, post-generation):
-  - MAIN GENERATORS: Preview · Stop · Pad · Arpeggiator · Inspiration (Melody) · Vocals · Bass
-  - EXTRA GENERATORS: Countermelody · Texture · Ornament · Miasmatic · Drones · Percussion · Glitch FX
-  - EXPORT: Save Song Data · Save PDF
-- **Dot indicators**: grey = generator not run, green = active in Tone.js preview (Pad/Melody/Bass/Drums/Vocals only)
-- **Header**: CapricEngine SVG logo ~80px desktop / 56px mobile, "v5.2" pill badge inline, "Create musical architectures" tagline, max 64px total header height
-- **Chord tooltip** (pure CSS, no JS): quality name · intervals · key function. Triggered on hover over chord name text.
+Section colors: Intro #4A7FA5 · Verse #5A9A6E · Chorus #9A5A9A · Bridge #A57A4A · Outro #5A7AA5 · Solo #A55A5A
+
+Button groups (post-generation):
+- MAIN: Preview · Stop · Pad · Arpeggiator · Inspiration (Melody) · Vocals · Bass
+- EXTRA: Countermelody · Texture · Ornament · Miasmatic · Drones · Percussion · Glitch FX
+- EXPORT: Save Song Data · Save PDF · Download Full MIDI
+
+Dot indicators: grey = not generated, green = active in preview.
+Passing chord slots show `<span class="passing-badge">p</span>` in section cards.
 
 ---
 
 ## Deployment
 
-**Requirements**: PHP 7.4+, Apache with mod_rewrite + mod_headers + mod_deflate. No npm/composer/build.
-
-The included `.htaccess` handles: mod_rewrite (DirectoryIndex index.html), cache headers (JS/CSS/JSON = 1 week, PHP = no-cache), CORS for get_chord_data.php (same origin), gzip compression.
-
-**Subdirectory install**: update the fetch base path in `lib/chord-renderer.js` → `fetchChordVoicings()`.
-
-**Offline / no PHP**: replace fetch call in `lib/chord-renderer.js` with a static JSON lookup from `lib/chord-db/chords-static.json` (key format: `"Root_suffix"`).
+PHP 7.4+, Apache + mod_rewrite/headers/deflate. `.htaccess` included.
+Subdirectory: update fetch base path in `lib/chord-renderer.js`.
+Offline: replace PHP fetch with static `lib/chord-db/chords-static.json` lookup.
 
 ---
 
-## Development rules (for Claude Code sessions)
+## Potential next improvements
 
-1. **No npm/node/build step.** All JS via `<script>` tags. Dependency order in index.html is load-order-sensitive.
-2. **Never modify `mainChordSlots` structure or `app-midi-export.js` core logic.**
-3. **Never use bare `Math.random()` in generation logic** — use `mulberry32` seeded PRNG from theory-helpers.js.
-4. **Each feature must degrade gracefully** if its CDN dependency (Tone.js, jsPDF, html2canvas) fails to load.
-5. **Preserve existing Italian comments** in the codebase. Write new comments in English.
-6. **Every commit must leave the app in a working state.**
-7. **Commit format**: `[CE5.2] Group N — short description`
-8. **Version string "v5.2"** must appear in: `<title>` tag, header UI element, PDF footer, README.
-9. **Audio preview**: do not connect additional generators beyond the current 5 (Pad/Melody/Bass/Drums/Vocals). MIDI-only generators are: Arpeggiator, Countermelody, Texture, Drones, Ornament, Miasmatic, Percussion, GlitchFx.
-10. **CSS changes** go in `style/` only. Never embed styles in JS or HTML.
-
----
-
-## Potential future improvements
-
-- MusicXML export (importable in notation software)
-- Custom presets: save user's favorite mood/key/structure combos
-- Micro-timing humanization: ±5 tick `startTick` variation for groove/swing feel
-- Expanded bass rhythm patterns: funk, reggae, disco, alt-rock genres
-- Contour-based melody generation: predefined rising/falling/arch shapes
-- More song structure templates (target: 30+), categorized by genre in UI
-- SoundFont-based preview: replace synth fallbacks with GM SoundFont via MIDI.js for realistic instrument sounds
-- Mobile "Quick Generate" button: one-tap full-random generation for screens < 480px
-- Chord progression export as plain text / JSON for external use
+- Flat velocity fix: Pad, Countermelody, Texture, Drones
+- Melody/Vocal timing: reduce humanizeTiming strength
+- Bridge chord variety fix
+- Melody/Vocal "motif memory": extract 2-4 note cell at generation, reuse across sections
+- Global tension curve: Chorus 3 more intense than Chorus 1 (repetition multiplier)
+- Song DNA object: preferred interval + rhythmic cell as generation constraints
+- MusicXML export
+- SoundFont-based preview (GM via MIDI.js)
+- Mobile quick-generate button (one tap, all random)
