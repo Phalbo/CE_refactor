@@ -80,6 +80,14 @@ Module-level counters `_arpeggioConsecutiveSilences` and `_arpeggioLastSectionTy
 - `trap_hihats_44` (weight 8, 32-grid): 16th-note hi-hat grid with open bursts on off-16th positions, syncopated kick. Moods: ansioso, arrabbiato.  
 - `bossa_nova_44` (weight 7): Cross-stick on 3/9/14, ride on all 8ths, foot hi-hat on 2 and 4, kick on 1/6/10. Ride bell variation (25 %). Moods: etereo, malinconico, very_normal_person.
 
+## Harmonic Rhythm Refactor
+
+Status: Step 1 complete — Step 2 pending
+
+**Step 1** replaced the equal-distribution `mainChordSlots` building loop in `main/app-song-generation.js` with a rhythm-aware version driven by `SECTION_HARMONIC_RHYTHM_PATTERNS` (in `lib/harmonic-patterns-config.js`). Chord durations within each section are now drawn from weighted random patterns (e.g. `OneChordPerBar`, `SplitBar`, `Syncopated`, `QuickChange`) keyed by time signature and section type. New slot fields `isPassingChord` and `isHit` are set for use in Step 2.
+
+---
+
 ## v5.3 — What's new
 
 **Download Full MIDI (`handleDownloadFullMidi` in `main/app-midi-export.js`)**  

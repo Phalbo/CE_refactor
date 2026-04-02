@@ -443,46 +443,89 @@ async function generateSongArchitecture() {
             currentGlobalTickForTS += finalMeasures * beatsPerMeasureInSection * ticksPerBeatForThisSection;
         });
 
-        // --- FASE DI CREAZIONE DEI mainChordSlots (Logica Avanzata per Accordi Variabili) ---
+        // --- FASE DI CREAZIONE DEI mainChordSlots (rhythm-aware via SECTION_HARMONIC_RHYTHM_PATTERNS) ---
         rawMidiSectionsData.forEach(sectionData => {
-            if (sectionData.baseChords.length === 0 || sectionData.measures === 0) {
-                return; // Sezione vuota, non generare slot
-            }
+            if (sectionData.baseChords.length === 0 || sectionData.measures === 0) return;
 
-            const totalTicksInSection = sectionData.measures * (4 / sectionData.timeSignature[1]) * sectionData.timeSignature[0] * TICKS_PER_QUARTER_NOTE_REFERENCE;
-            const numChords = sectionData.baseChords.length;
+            const totalTicksInSection = sectionData.measures
+                * (4 / sectionData.timeSignature[1])
+                * sectionData.timeSignature[0]
+                * TICKS_PER_QUARTER_NOTE_REFERENCE;
 
-            // Calcola la durata di base per ogni accordo e la distribuzione dei resti
-            const baseDuration = Math.floor(totalTicksInSection / numChords);
-            let remainder = totalTicksInSection % numChords;
+            const ticksPerBeat = (4 / sectionData.timeSignature[1])
+                * TICKS_PER_QUARTER_NOTE_REFERENCE;
+
+            const tsKey = `${sectionData.timeSignature[0]}/${sectionData.timeSignature[1]}`;
+            const cleanType = getCleanSectionName(sectionData.name);
+
+            const rhythmPatterns = SECTION_HARMONIC_RHYTHM_PATTERNS?.[tsKey]?.[cleanType]
+                || SECTION_HARMONIC_RHYTHM_PATTERNS?.['4/4']?.[cleanType]
+                || SECTION_HARMONIC_RHYTHM_PATTERNS?.['4/4']?.['verse'];
+
+            const chosenRhythmPattern = getWeightedRandom(
+                rhythmPatterns.reduce((acc, p) => { acc[p.name] = p; return acc; }, {})
+            );
 
             let currentTick = 0;
-            for (let i = 0; i < numChords; i++) {
-                let chordDuration = baseDuration;
-                // Distribuisci il resto equamente tra i primi accordi
-                if (remainder > 0) {
-                    chordDuration++;
-                    remainder--;
-                }
+            let chordIndex = 0;
 
-                if (chordDuration > 0) {
+            for (let bar = 0; bar < sectionData.measures; bar++) {
+                const pattern = chosenRhythmPattern.pattern;
+                let nextStepsThisBar = 0;
+
+                pattern.forEach(step => {
+                    const unit = step.unit || 1;
+                    const durationTicks = Math.round(step.durationBeats * unit * ticksPerBeat);
+                    if (durationTicks <= 0) return;
+
+                    let chordName;
+
+                    if (step.degree === 'FROM_CHOSEN_PATTERN') {
+                        chordName = sectionData.baseChords[chordIndex % sectionData.baseChords.length];
+                    } else if (step.degree === 'NEXT_FROM_CHOSEN_PATTERN') {
+                        nextStepsThisBar++;
+                        chordName = sectionData.baseChords[
+                            (chordIndex + nextStepsThisBar) % sectionData.baseChords.length
+                        ];
+                    } else if (step.degree === 'PREV_FROM_CHOSEN_PATTERN') {
+                        const prevIdx = ((chordIndex - 1) % sectionData.baseChords.length
+                            + sectionData.baseChords.length) % sectionData.baseChords.length;
+                        chordName = sectionData.baseChords[prevIdx];
+                    } else if (step.degree === 'PASSING') {
+                        // Placeholder — resolved in Step 2
+                        chordName = sectionData.baseChords[
+                            (chordIndex + 1) % sectionData.baseChords.length
+                        ];
+                    } else if (step.degree === 'HIT') {
+                        chordName = sectionData.baseChords[chordIndex % sectionData.baseChords.length];
+                    } else {
+                        chordName = sectionData.baseChords[chordIndex % sectionData.baseChords.length];
+                    }
+
                     sectionData.mainChordSlots.push({
-                        chordName: sectionData.baseChords[i],
+                        chordName: chordName,
                         effectiveStartTickInSection: currentTick,
-                        effectiveDurationTicks: chordDuration,
+                        effectiveDurationTicks: durationTicks,
                         timeSignature: sectionData.timeSignature,
-                        sectionStartTick: sectionData.startTick
+                        sectionStartTick: sectionData.startTick,
+                        isPassingChord: step.degree === 'PASSING',
+                        isHit: step.degree === 'HIT'
                     });
-                }
-                currentTick += chordDuration;
+
+                    currentTick += durationTicks;
+                });
+
+                // Advance chordIndex by 1 per bar plus NEXT_ steps taken
+                chordIndex = (chordIndex + 1 + nextStepsThisBar) % sectionData.baseChords.length;
             }
 
-            // Fallback di sicurezza: se la durata totale non corrisponde, aggiusta l'ultimo accordo
+            // Safety: adjust last slot to fill exact section duration
             if (sectionData.mainChordSlots.length > 0) {
                 const lastSlot = sectionData.mainChordSlots[sectionData.mainChordSlots.length - 1];
-                const calculatedTotalDuration = lastSlot.effectiveStartTickInSection + lastSlot.effectiveDurationTicks;
-                if (calculatedTotalDuration !== totalTicksInSection) {
-                    lastSlot.effectiveDurationTicks += (totalTicksInSection - calculatedTotalDuration);
+                const calculatedTotal = lastSlot.effectiveStartTickInSection
+                    + lastSlot.effectiveDurationTicks;
+                if (calculatedTotal !== totalTicksInSection) {
+                    lastSlot.effectiveDurationTicks += (totalTicksInSection - calculatedTotal);
                 }
             }
         });
