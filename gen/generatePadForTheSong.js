@@ -37,7 +37,7 @@ function handleGeneratePad() {
                                 pitch: midiNoteNumbers,
                                 duration: `T${Math.round(slot.effectiveDurationTicks)}`,
                                 startTick: humanizeTiming(sectionData.startTick + slot.effectiveStartTickInSection, 2),
-                                velocity: 60,
+                                velocity: humanizeVelocity(72, 12),
                             });
                         }
                     }

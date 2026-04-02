@@ -42,11 +42,12 @@ function generateCountermelodyForSong(songData, helpers, sectionCache) {
                     let counterPitch = selectPitchForContraryMotion(lastCounterPitch, melodyDirection, chordPitches);
                     counterPitch = clampToRange(counterPitch, GENERATOR_OCTAVE_RANGES.Countermelody.min, GENERATOR_OCTAVE_RANGES.Countermelody.max);
 
+                    const beatPositionInTicks = (slot.effectiveStartTickInSection + currentTickInSlot) % ticksPerBeat;
                     sectionTrack.push({
                         pitch: [counterPitch],
                         duration: `T${ticksPerBeat}`, // Eighth note
                         startTick: humanizeTiming(slot.effectiveStartTickInSection + currentTickInSlot, 3),
-                        velocity: 70
+                        velocity: humanizeVelocity(80, 14, beatPositionInTicks, ticksPerBeat)
                     });
                     lastCounterPitch = counterPitch;
                 }
