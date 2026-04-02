@@ -104,7 +104,9 @@ Module-level counters `_arpeggioConsecutiveSilences` and `_arpeggioLastSectionTy
 
 ## Harmonic Rhythm Refactor
 
-Status: Step 1 complete — Step 2 pending
+Status: Step 2 complete — Step 3 pending
+
+**Step 2** added `getDegreeFromChordName` and `resolvePassingChords` functions in `main/app-song-generation.js`. After all `mainChordSlots` are built, a second pass iterates every slot flagged `isPassingChord: true`, matches the surrounding chord pair against `PASSING_CHORD_RULES` (in `lib/passing-chords-config.js`) using probability-weighted rule firing, and writes the resolved chord name back to the slot. Fallback: dominant-7th a semitone below the target chord root. Resolved chords are added to `allGeneratedChordsSet`.
 
 **Step 1** replaced the equal-distribution `mainChordSlots` building loop in `main/app-song-generation.js` with a rhythm-aware version driven by `SECTION_HARMONIC_RHYTHM_PATTERNS` (in `lib/harmonic-patterns-config.js`). Chord durations within each section are now drawn from weighted random patterns (e.g. `OneChordPerBar`, `SplitBar`, `Syncopated`, `QuickChange`) keyed by time signature and section type. New slot fields `isPassingChord` and `isHit` are set for use in Step 2.
 
