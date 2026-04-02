@@ -147,6 +147,9 @@ function generateChordsForSection(
     }
     // --- Fine Blocco di Logica Definitivo ---
 
+    const isIntroOutro = cleanSectionNameForStyle === 'intro' ||
+                         cleanSectionNameForStyle === 'outro';
+
     // Fase 1: Nuova Libreria di Pattern Armonici
     const POP_PATTERNS = {
         major: {
@@ -169,16 +172,36 @@ function generateChordsForSection(
     let baseProgressionDegrees = [];
     if (targetBaseProgressionLength > 0) {
         const keyType = scales[currentModeForDiatonicGeneration]?.type === 'minor' ? 'minor' : 'major';
-        const availablePatterns = POP_PATTERNS[keyType][targetBaseProgressionLength];
 
-        if (availablePatterns && availablePatterns.length > 0) {
-            baseProgressionDegrees = getRandomElement(availablePatterns);
+        if (isIntroOutro) {
+            // Intro and outro: always use simple tonic-based progressions
+            const simplePatterns = keyType === 'major' ? [
+                ['I'],
+                ['I', 'V'],
+                ['I', 'IV'],
+                ['I', 'V', 'I'],
+                ['I', 'IV', 'V', 'I']
+            ] : [
+                ['i'],
+                ['i', 'v'],
+                ['i', 'VI'],
+                ['i', 'VI', 'VII'],
+                ['i', 'v', 'i']
+            ];
+            baseProgressionDegrees = simplePatterns.find(p => p.length === targetBaseProgressionLength)
+                || simplePatterns[Math.floor(Math.random() * simplePatterns.length)];
         } else {
-            const tonic = keyType === 'minor' ? 'i' : 'I';
-            const dominant = keyType === 'minor' ? 'v' : 'V';
-            baseProgressionDegrees = [tonic];
-            for (let i = 1; i < targetBaseProgressionLength; i++) {
-                baseProgressionDegrees.push(i % 2 === 1 ? dominant : tonic);
+            const availablePatterns = POP_PATTERNS[keyType][targetBaseProgressionLength];
+
+            if (availablePatterns && availablePatterns.length > 0) {
+                baseProgressionDegrees = getRandomElement(availablePatterns);
+            } else {
+                const tonic = keyType === 'minor' ? 'i' : 'I';
+                const dominant = keyType === 'minor' ? 'v' : 'V';
+                baseProgressionDegrees = [tonic];
+                for (let i = 1; i < targetBaseProgressionLength; i++) {
+                    baseProgressionDegrees.push(i % 2 === 1 ? dominant : tonic);
+                }
             }
         }
     }
@@ -539,9 +562,17 @@ async function generateSongArchitecture() {
                 || SECTION_HARMONIC_RHYTHM_PATTERNS?.['4/4']?.[cleanType]
                 || SECTION_HARMONIC_RHYTHM_PATTERNS?.['4/4']?.['verse'];
 
-            const chosenRhythmPattern = getWeightedRandom(
-                rhythmPatterns.reduce((acc, p) => { acc[p.name] = p; return acc; }, {})
-            );
+            const rhythmCacheKey = cleanType; // 'verse', 'chorus', etc.
+            let chosenRhythmPattern;
+            if (currentSong.rhythmPatternCache[rhythmCacheKey]) {
+                // Reuse the same pattern for repeated section types
+                chosenRhythmPattern = currentSong.rhythmPatternCache[rhythmCacheKey];
+            } else {
+                chosenRhythmPattern = getWeightedRandom(
+                    rhythmPatterns.reduce((acc, p) => { acc[p.name] = p; return acc; }, {})
+                );
+                currentSong.rhythmPatternCache[rhythmCacheKey] = chosenRhythmPattern;
+            }
 
             let currentTick = 0;
             let chordIndex = 0;
@@ -592,8 +623,10 @@ async function generateSongArchitecture() {
                     currentTick += durationTicks;
                 });
 
-                // Advance chordIndex by 1 per bar plus NEXT_ steps taken
-                chordIndex = (chordIndex + 1 + nextStepsThisBar) % sectionData.baseChords.length;
+                // chordIndex advances once per bar, wrapping on the progression length.
+                // NEXT_ steps within a bar are relative offsets, not permanent advances.
+                // This means a 4-chord progression over 8 bars repeats each chord ~2x.
+                chordIndex = (chordIndex + 1) % sectionData.baseChords.length;
             }
 
             // Safety: adjust last slot to fill exact section duration
