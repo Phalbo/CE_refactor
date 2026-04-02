@@ -592,8 +592,10 @@ async function generateSongArchitecture() {
                     currentTick += durationTicks;
                 });
 
-                // Advance chordIndex by 1 per bar plus NEXT_ steps taken
-                chordIndex = (chordIndex + 1 + nextStepsThisBar) % sectionData.baseChords.length;
+                // chordIndex advances once per bar, wrapping on the progression length.
+                // NEXT_ steps within a bar are relative offsets, not permanent advances.
+                // This means a 4-chord progression over 8 bars repeats each chord ~2x.
+                chordIndex = (chordIndex + 1) % sectionData.baseChords.length;
             }
 
             // Safety: adjust last slot to fill exact section duration
