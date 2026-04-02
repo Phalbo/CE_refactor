@@ -539,9 +539,17 @@ async function generateSongArchitecture() {
                 || SECTION_HARMONIC_RHYTHM_PATTERNS?.['4/4']?.[cleanType]
                 || SECTION_HARMONIC_RHYTHM_PATTERNS?.['4/4']?.['verse'];
 
-            const chosenRhythmPattern = getWeightedRandom(
-                rhythmPatterns.reduce((acc, p) => { acc[p.name] = p; return acc; }, {})
-            );
+            const rhythmCacheKey = cleanType; // 'verse', 'chorus', etc.
+            let chosenRhythmPattern;
+            if (currentSong.rhythmPatternCache[rhythmCacheKey]) {
+                // Reuse the same pattern for repeated section types
+                chosenRhythmPattern = currentSong.rhythmPatternCache[rhythmCacheKey];
+            } else {
+                chosenRhythmPattern = getWeightedRandom(
+                    rhythmPatterns.reduce((acc, p) => { acc[p.name] = p; return acc; }, {})
+                );
+                currentSong.rhythmPatternCache[rhythmCacheKey] = chosenRhythmPattern;
+            }
 
             let currentTick = 0;
             let chordIndex = 0;
