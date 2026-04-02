@@ -443,6 +443,83 @@ async function generateSongArchitecture() {
             currentGlobalTickForTS += finalMeasures * beatsPerMeasureInSection * ticksPerBeatForThisSection;
         });
 
+        // --- Helper: resolve scale degree from chord name ---
+        function getDegreeFromChordName(chordName, keyInfo, helpers) {
+            const root = helpers.getChordRootAndType(chordName).root;
+            const tonicIdx = helpers.NOTE_NAMES.indexOf(keyInfo.root);
+            const chordIdx = helpers.NOTE_NAMES.indexOf(root);
+            if (tonicIdx === -1 || chordIdx === -1) return 'I';
+            const interval = (chordIdx - tonicIdx + 12) % 12;
+            const degreeMap = {
+                0:'I', 1:'bII', 2:'II', 3:'bIII', 4:'III',
+                5:'IV', 6:'#IV', 7:'V', 8:'bVI', 9:'VI',
+                10:'bVII', 11:'VII'
+            };
+            return degreeMap[interval] || 'I';
+        }
+
+        // --- Helper: resolve PASSING slots to real chords via PASSING_CHORD_RULES ---
+        function resolvePassingChords(sectionData, keyInfo, scaleType,
+                                       allGeneratedChordsSet, helpers) {
+            const slots = sectionData.mainChordSlots;
+            if (!slots || slots.length < 2) return;
+
+            for (let i = 0; i < slots.length; i++) {
+                if (!slots[i].isPassingChord) continue;
+
+                const prevSlot = slots[i - 1];
+                const nextSlot = slots[i + 1];
+                if (!prevSlot || !nextSlot) continue;
+
+                const chord1Root = helpers.getChordRootAndType(prevSlot.chordName).root;
+                const chord2Root = helpers.getChordRootAndType(nextSlot.chordName).root;
+
+                const chord1 = {
+                    root: chord1Root,
+                    name: prevSlot.chordName,
+                    degree: getDegreeFromChordName(prevSlot.chordName, keyInfo, helpers)
+                };
+                const chord2 = {
+                    root: chord2Root,
+                    name: nextSlot.chordName,
+                    degree: getDegreeFromChordName(nextSlot.chordName, keyInfo, helpers)
+                };
+
+                let resolved = null;
+                for (const rule of PASSING_CHORD_RULES) {
+                    try {
+                        if (rule.condition(chord1, chord2, keyInfo, scaleType, helpers)) {
+                            if (Math.random() < rule.probability) {
+                                resolved = rule.generatePassingChord(
+                                    chord1, chord2, keyInfo, helpers
+                                );
+                                break;
+                            }
+                        }
+                    } catch(e) {
+                        continue; // skip broken rules silently
+                    }
+                }
+
+                if (resolved) {
+                    slots[i].chordName = resolved;
+                    slots[i].isPassingChordResolved = true;
+                    allGeneratedChordsSet.add(resolved);
+                } else {
+                    // Fallback: semitone below chord2 root
+                    const chord2RootIdx = helpers.NOTE_NAMES.indexOf(chord2Root);
+                    if (chord2RootIdx !== -1) {
+                        const approachNote = helpers.NOTE_NAMES[(chord2RootIdx + 11) % 12];
+                        const fallback = helpers.normalizeChordNameToSharps(
+                            approachNote + helpers.QUALITY_DEFS.dom7.suffix
+                        );
+                        slots[i].chordName = fallback;
+                        allGeneratedChordsSet.add(fallback);
+                    }
+                }
+            }
+        }
+
         // --- FASE DI CREAZIONE DEI mainChordSlots (rhythm-aware via SECTION_HARMONIC_RHYTHM_PATTERNS) ---
         rawMidiSectionsData.forEach(sectionData => {
             if (sectionData.baseChords.length === 0 || sectionData.measures === 0) return;
@@ -530,6 +607,24 @@ async function generateSongArchitecture() {
             }
         });
         // --- FINE FASE DI CREAZIONE mainChordSlots ---
+
+        // --- FASE DI RISOLUZIONE PASSING CHORDS ---
+        rawMidiSectionsData.forEach(sectionData => {
+            resolvePassingChords(
+                sectionData,
+                selectedKey,
+                scales[selectedKey.mode]?.type || 'major',
+                allGeneratedChordsSet,
+                {
+                    NOTE_NAMES,
+                    QUALITY_DEFS,
+                    normalizeChordNameToSharps,
+                    getNoteName,
+                    getChordRootAndType
+                }
+            );
+        });
+        // --- FINE FASE DI RISOLUZIONE PASSING CHORDS ---
 
         songData.sections = rawMidiSectionsData;
         songData.timeSignatureChanges = timeSignatureChanges;
