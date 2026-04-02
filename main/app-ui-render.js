@@ -193,10 +193,15 @@ async function renderSongOutput(songData, allGeneratedChordsSet, styleNote, main
         output += `  <div class="section-card-header">${sectionTitleForDisplay}</div>`;
         output += `  <div class="section-card-body">`;
         output += `    <div class="section-card-chords-container">`;
-        const chordsString = sectionData.mainChordSlots && sectionData.mainChordSlots.length > 0
+        const plainChordsString = sectionData.mainChordSlots && sectionData.mainChordSlots.length > 0
             ? sectionData.mainChordSlots.map(slot => slot.chordName).join(' | ')
             : '(Instrumental/Silence)';
-        output += `      <div class="section-card-chords" data-chords="${chordsString}" data-has-chords="${!!(sectionData.mainChordSlots && sectionData.mainChordSlots.length > 0)}">${chordsString}</div>`;
+        const chordsHtml = sectionData.mainChordSlots && sectionData.mainChordSlots.length > 0
+            ? sectionData.mainChordSlots.map(slot =>
+                slot.chordName + (slot.isPassingChord ? '<span class="passing-badge">p</span>' : '')
+              ).join(' | ')
+            : '(Instrumental/Silence)';
+        output += `      <div class="section-card-chords" data-chords="${plainChordsString}" data-has-chords="${!!(sectionData.mainChordSlots && sectionData.mainChordSlots.length > 0)}">${chordsHtml}</div>`;
         output += `    </div>`;
         output += `    <div class="section-bars-label">${barCountActual} bars</div>`;
         output += `  </div>`;
@@ -298,7 +303,13 @@ async function renderSongOutput(songData, allGeneratedChordsSet, styleNote, main
                 const segment = document.createElement('div');
                 segment.className = 'chord-segment';
                 segment.style.width = `${widthPercentage}%`;
-                segment.textContent = chordSlot.chordName;
+                segment.appendChild(document.createTextNode(chordSlot.chordName));
+                if (chordSlot.isPassingChord) {
+                    const badge = document.createElement('span');
+                    badge.className = 'passing-badge';
+                    badge.textContent = 'p';
+                    segment.appendChild(badge);
+                }
                 segment.title = `${chordSlot.chordName} (${(chordSlot.effectiveDurationTicks / (TICKS_PER_QUARTER_NOTE_REFERENCE * (4 / sectionData.timeSignature[1]))).toFixed(2)} beats)`;
                 sectionBody.appendChild(segment);
             });
