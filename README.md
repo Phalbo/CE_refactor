@@ -1,9 +1,8 @@
 # CapricEngine v5.3
 
 
-## Harmonic rhythm refactor — in progress
+## Harmonic rhythm refactor complete
 
-**Status: Step 1 pending**
 
 Wiring SECTION_HARMONIC_RHYTHM_PATTERNS and PASSING_CHORD_RULES 
 into the mainChordSlots building logic. Both files were loaded 
