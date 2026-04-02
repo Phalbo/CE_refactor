@@ -232,7 +232,7 @@ function generateMelodyForSong(songMidiData, mainScaleNotes, mainScaleRoot, CHOR
                         sectionMelody.push({
                             pitch: [targetPitch],
                             duration: `T${Math.round(actualNoteDuration)}`,
-                            startTick: humanizeTiming(slotStartTickAbsolute + currentRelativeTick, 6),
+                            startTick: humanizeTiming(slotStartTickAbsolute + currentRelativeTick, 3),
                             velocity: humanizeVelocity(75, 15, (slotStartTickAbsolute + currentRelativeTick) % TPQN_MELODY, TPQN_MELODY)
                         });
                         // FIX 3b: update directional tracking

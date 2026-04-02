@@ -557,7 +557,7 @@ function generateVocalLineForSong(
                         sectionVocalLine.push({
                             pitch: [clampedNewPitch],
                             duration: `T${Math.round(eventDuration)}`,
-                            startTick: humanizeTiming(Math.round(eventStartAbsolute), 5),
+                            startTick: humanizeTiming(Math.round(eventStartAbsolute), 2),
                             velocity: eventDetail.velocity
                         });
                         lastGeneratedMidiPitch = newPitch;
@@ -660,7 +660,7 @@ function generateVocalLineForSong(
                             const eventToAdd = {
                                 pitch: [clampedTargetPitch],
                                 duration: `T${Math.round(durationTicks)}`,
-                                startTick: humanizeTiming(Math.round(eventAbsoluteStartTick), 5),
+                                startTick: humanizeTiming(Math.round(eventAbsoluteStartTick), 2),
                                 velocity: eventVelocity
                             };
                             sectionVocalLine.push(eventToAdd);
@@ -693,7 +693,7 @@ function generateVocalLineForSong(
                     sectionVocalLine.push({
                         pitch: [fallbackPitch],
                         duration: `T${fallbackDuration}`,
-                        startTick: humanizeTiming(Math.round(sectionStartTickAbsolute + currentChordSlotStartTickInSection), 5),
+                        startTick: humanizeTiming(Math.round(sectionStartTickAbsolute + currentChordSlotStartTickInSection), 2),
                         velocity: humanizeVelocity(65, 10)
                     });
                     lastGeneratedMidiPitch = fallbackPitch;
