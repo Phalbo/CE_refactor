@@ -48,19 +48,31 @@ function convertVocalNoteToMidiInternal(noteNameInput, NOTE_NAMES_SHARP, ALL_NOT
 }
 
 
-function selectActiveVocalStyle(passedGetRandomElementFunc_param) {
+const MOOD_TO_VOCAL_STYLES = {
+    "very_normal_person":        ["rnm", "btlsxp", "bllylsh"],
+    "malinconico_introspettivo": ["pnkfloyd", "yrk", "tmwts"],
+    "ansioso_distopico":         ["yrk", "rgegnstmch", "scat_riff"],
+    "arrabbiato_critico":        ["sxpstl", "rgegnstmch", "fmrcry"],
+    "etereo_sognante":           ["pnkfloyd", "bllylsh", "yrk"],
+    "sperimentale_astratto":     ["tmwts", "yrk", "scat_riff", "btlsxp"],
+};
+
+function selectActiveVocalStyle(passedGetRandomElementFunc_param, mood) {
     if (typeof VOCAL_STYLE_PROFILES === 'undefined' || Object.keys(VOCAL_STYLE_PROFILES).length === 0) {
         console.error("VOCAL_STYLE_PROFILES non definito o vuoto! Assicurati che lib/vocal_profiles.js sia caricato.");
-        // Restituisce un fallback di emergenza se VOCAL_STYLE_PROFILES non è disponibile
         return { style_label: "Critical Error Fallback", interval_pattern: [{interval:0, probability:1}], direction_bias: {same:1}, note_duration_rules: [{duration_type:'quarter', probability:1}], rest_rules: [{duration_type:'pause_skip', probability:1}], rhythm_accent_rules: {on_beat:1}, velocity_rules: {base:70, range:0}, mode_preference: null, vocal_register_rules: {preferred_octave:3, min_midi:53, max_midi:65} };
     }
-    const styleKeys = Object.keys(VOCAL_STYLE_PROFILES);
     if (!VOCAL_STYLE_PROFILES["default_fallback"]) {
         console.error("VOCAL_STYLE_PROFILES manca default_fallback!");
         return { style_label: "Error Fallback No Default", interval_pattern: [{interval:0, probability:1}], direction_bias: {same:1}, note_duration_rules: [{duration_type:'quarter', probability:1}], rest_rules: [{duration_type:'pause_skip', probability:1}], rhythm_accent_rules: {on_beat:1}, velocity_rules: {base:70, range:0}, mode_preference: null, vocal_register_rules: {preferred_octave:3, min_midi:53, max_midi:65} };
     }
-    const validStyleKeys = styleKeys.filter(k => k !== "default_fallback");
-    const randomStyleKey = passedGetRandomElementFunc_param(validStyleKeys.length > 0 ? validStyleKeys : ["default_fallback"]);
+    const pool = (mood && MOOD_TO_VOCAL_STYLES[mood])
+        ? MOOD_TO_VOCAL_STYLES[mood]
+        : Object.keys(VOCAL_STYLE_PROFILES).filter(k => k !== 'default_fallback');
+    const validPool = pool.filter(k => VOCAL_STYLE_PROFILES[k]);
+    const randomStyleKey = passedGetRandomElementFunc_param(
+        validPool.length > 0 ? validPool : ['default_fallback']
+    );
     return VOCAL_STYLE_PROFILES[randomStyleKey] || VOCAL_STYLE_PROFILES.default_fallback;
 }
 
@@ -447,7 +459,7 @@ function generateVocalLineForSong(
     }
     const TPQN_VOCAL = typeof TICKS_PER_QUARTER_NOTE_REFERENCE !== 'undefined' ? TICKS_PER_QUARTER_NOTE_REFERENCE : 128;
 
-    activeVocalStyle = selectActiveVocalStyle(passedGetRandomElementFunc);
+    activeVocalStyle = selectActiveVocalStyle(passedGetRandomElementFunc, songMidiData.mood);
 
     const vocalEvents = [];
     storedChorusMotifs_Vocal = [];

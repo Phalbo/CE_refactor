@@ -86,6 +86,12 @@ Rhythm patterns now cached per section type (`rhythmPatternCache` on SongDocumen
 Intro/Outro use simple tonic progressions only — drawn from a restricted set of I/V/IV patterns, bypassing the POP_PATTERNS library used by verse/chorus/bridge.  
 Melody and Vocal separated into distinct octave registers: Melody E4–A5 (`min: 64, max: 81`), Vocal E3–G4 (`min: 52, max: 67`); the two lines no longer occupy the same octave.
 
+**9 — Four more fixes**  
+Chord timeline proportional segments now connected: `section-card-body` receives `id="section-body-N"` so the JS population code finds it; text chord display removed; consecutive duplicate chords merged into one wide block; segments narrower than 8% hide text; passing chord segments use 0.7 opacity; `.chord-segment` CSS rule added.  
+Flat velocity resolved: Pad `humanizeVelocity(72,12)`, Countermelody `humanizeVelocity(80,14,beatPos,tpb)`, Texture `humanizeVelocity(55,10)`, Drones `humanizeVelocity(60,8)`.  
+`humanizeTiming` strength reduced: Melody 6→3, Vocal 5→2.  
+Miasmatic generator retired — script tag and `addListener` removed, `miasmatic` field removed from SongDocument, entries removed from `INSTRUMENT_MAP` and `GENERATOR_OCTAVE_RANGES`. Its melodic/rhythmic character absorbed into new `scat_riff` vocal profile in `lib/vocal_profiles.js`. `selectActiveVocalStyle` now accepts mood and maps each mood to a curated pool of vocal styles via `MOOD_TO_VOCAL_STYLES`.
+
 ## Harmonic Rhythm Refactor
 
 Harmonic rhythm refactor: COMPLETE
