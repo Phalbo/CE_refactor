@@ -191,20 +191,8 @@ async function renderSongOutput(songData, allGeneratedChordsSet, styleNote, main
         output += `<div class="timeline-section-card" id="timeline-section-${sectionIndex}"
                         style="--section-color-var: var(${sectionColorVarName}, var(--section-color-default)); width: ${sectionWidthPx}px;">`;
         output += `  <div class="section-card-header">${sectionTitleForDisplay}</div>`;
-        output += `  <div class="section-card-body">`;
-        output += `    <div class="section-card-chords-container">`;
-        const plainChordsString = sectionData.mainChordSlots && sectionData.mainChordSlots.length > 0
-            ? sectionData.mainChordSlots.map(slot => slot.chordName).join(' | ')
-            : '(Instrumental/Silence)';
-        const chordsHtml = sectionData.mainChordSlots && sectionData.mainChordSlots.length > 0
-            ? sectionData.mainChordSlots.map(slot =>
-                slot.chordName + (slot.isPassingChord ? '<span class="passing-badge">p</span>' : '')
-              ).join(' | ')
-            : '(Instrumental/Silence)';
-        output += `      <div class="section-card-chords" data-chords="${plainChordsString}" data-has-chords="${!!(sectionData.mainChordSlots && sectionData.mainChordSlots.length > 0)}">${chordsHtml}</div>`;
-        output += `    </div>`;
-        output += `    <div class="section-bars-label">${barCountActual} bars</div>`;
-        output += `  </div>`;
+        output += `  <div class="section-card-body" id="section-body-${sectionIndex}"></div>`;
+        output += `  <div class="section-bars-label">${barCountActual} bars</div>`;
         output += `  <div class="section-bar-grid" data-bar-count="${barCountActual}"></div>`;
         output += `</div>`;
     });
@@ -298,17 +286,33 @@ async function renderSongOutput(songData, allGeneratedChordsSet, styleNote, main
         if (sectionData.mainChordSlots && sectionData.mainChordSlots.length > 0) {
             const totalTicksInSection = sectionData.measures * (4 / sectionData.timeSignature[1]) * TICKS_PER_QUARTER_NOTE_REFERENCE;
 
-            sectionData.mainChordSlots.forEach(chordSlot => {
+            // Merge consecutive non-passing slots with the same chord name
+            const mergedSlots = [];
+            sectionData.mainChordSlots.forEach(slot => {
+                const last = mergedSlots[mergedSlots.length - 1];
+                if (last && last.chordName === slot.chordName &&
+                    !slot.isPassingChord && !last.isPassingChord) {
+                    last.effectiveDurationTicks += slot.effectiveDurationTicks;
+                } else {
+                    mergedSlots.push({ ...slot });
+                }
+            });
+
+            mergedSlots.forEach(chordSlot => {
                 const widthPercentage = (chordSlot.effectiveDurationTicks / totalTicksInSection) * 100;
                 const segment = document.createElement('div');
-                segment.className = 'chord-segment';
+                let cls = 'chord-segment';
+                if (chordSlot.isPassingChord) cls += ' passing-segment';
+                segment.className = cls;
                 segment.style.width = `${widthPercentage}%`;
-                segment.appendChild(document.createTextNode(chordSlot.chordName));
-                if (chordSlot.isPassingChord) {
-                    const badge = document.createElement('span');
-                    badge.className = 'passing-badge';
-                    badge.textContent = 'p';
-                    segment.appendChild(badge);
+                if (widthPercentage >= 8) {
+                    segment.appendChild(document.createTextNode(chordSlot.chordName));
+                    if (chordSlot.isPassingChord) {
+                        const badge = document.createElement('span');
+                        badge.className = 'passing-badge';
+                        badge.textContent = 'p';
+                        segment.appendChild(badge);
+                    }
                 }
                 segment.title = `${chordSlot.chordName} (${(chordSlot.effectiveDurationTicks / (TICKS_PER_QUARTER_NOTE_REFERENCE * (4 / sectionData.timeSignature[1]))).toFixed(2)} beats)`;
                 sectionBody.appendChild(segment);

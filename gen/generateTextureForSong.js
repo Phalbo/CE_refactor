@@ -56,7 +56,7 @@ function generateTextureForSong(songData, helpers, sectionCache) {
                 pitch: pitches,
                 duration: `T${slot.effectiveDurationTicks}`,
                 startTick: humanizeTiming(slot.effectiveStartTickInSection, 2),
-                velocity: 40
+                velocity: humanizeVelocity(55, 10)
             });
         });
 
