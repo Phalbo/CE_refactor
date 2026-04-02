@@ -147,6 +147,9 @@ function generateChordsForSection(
     }
     // --- Fine Blocco di Logica Definitivo ---
 
+    const isIntroOutro = cleanSectionNameForStyle === 'intro' ||
+                         cleanSectionNameForStyle === 'outro';
+
     // Fase 1: Nuova Libreria di Pattern Armonici
     const POP_PATTERNS = {
         major: {
@@ -169,16 +172,36 @@ function generateChordsForSection(
     let baseProgressionDegrees = [];
     if (targetBaseProgressionLength > 0) {
         const keyType = scales[currentModeForDiatonicGeneration]?.type === 'minor' ? 'minor' : 'major';
-        const availablePatterns = POP_PATTERNS[keyType][targetBaseProgressionLength];
 
-        if (availablePatterns && availablePatterns.length > 0) {
-            baseProgressionDegrees = getRandomElement(availablePatterns);
+        if (isIntroOutro) {
+            // Intro and outro: always use simple tonic-based progressions
+            const simplePatterns = keyType === 'major' ? [
+                ['I'],
+                ['I', 'V'],
+                ['I', 'IV'],
+                ['I', 'V', 'I'],
+                ['I', 'IV', 'V', 'I']
+            ] : [
+                ['i'],
+                ['i', 'v'],
+                ['i', 'VI'],
+                ['i', 'VI', 'VII'],
+                ['i', 'v', 'i']
+            ];
+            baseProgressionDegrees = simplePatterns.find(p => p.length === targetBaseProgressionLength)
+                || simplePatterns[Math.floor(Math.random() * simplePatterns.length)];
         } else {
-            const tonic = keyType === 'minor' ? 'i' : 'I';
-            const dominant = keyType === 'minor' ? 'v' : 'V';
-            baseProgressionDegrees = [tonic];
-            for (let i = 1; i < targetBaseProgressionLength; i++) {
-                baseProgressionDegrees.push(i % 2 === 1 ? dominant : tonic);
+            const availablePatterns = POP_PATTERNS[keyType][targetBaseProgressionLength];
+
+            if (availablePatterns && availablePatterns.length > 0) {
+                baseProgressionDegrees = getRandomElement(availablePatterns);
+            } else {
+                const tonic = keyType === 'minor' ? 'i' : 'I';
+                const dominant = keyType === 'minor' ? 'v' : 'V';
+                baseProgressionDegrees = [tonic];
+                for (let i = 1; i < targetBaseProgressionLength; i++) {
+                    baseProgressionDegrees.push(i % 2 === 1 ? dominant : tonic);
+                }
             }
         }
     }
